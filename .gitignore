@@ -1,4 +1,14 @@
 /.vscode
-/build
 /external
 /png_imgs
+*.png
+*.bmp
+*.cmake
+*.exe
+*.mp4
+*.obj
+*.obj.d
+/build/CMakeFiles
+build/CMakeCache.txt
+build/compile_commands.json
+build/Makefile
