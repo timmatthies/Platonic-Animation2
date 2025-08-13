@@ -16,15 +16,15 @@ int main()
 {
     std::cout << "Platonic Animation Application" << std::endl;
 
-    int imageWidth = 500;
-    int imageHeight = 500;
+    int imageWidth = 100;
+    int imageHeight = 100;
     ImageGenerator imageGen(imageWidth, imageHeight);
     // Initialize and use the Camera class here
     Camera camera(imageWidth, imageHeight);
     Object cube = Object::getCube();
 
     // cube.setRotation(Vector3f(0.0f, 1.0f, 0.0f), 1); // Rotate cube over time
-    for(int i = 0; i < 100; ++i) {
+    for(int i = 0; i < 30; ++i) {
       float time = i * 0.03f; // Example time step
       cube.setRotation(Vector3f(0.5f, 1.0f, 0.5f), time); // Rotate cube over time
       LineSet lineSet = camera.convert_to_lines(cube);

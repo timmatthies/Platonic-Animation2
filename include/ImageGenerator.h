@@ -13,6 +13,7 @@ public:
     void drawPoints(const std::vector<Vector2f>& points, const std::vector<float>& intensity, const Vector3f& color);
     void drawLines(const LineSet& lineSet, const Vector3f& color);
     void saveImage(const std::string& filename);
+    std::vector<Vector2i> getMask(const LineSet& lineSet) const;
     void normalize();
     void clear() {
         std::fill(imageData.begin(), imageData.end(), Vector3f(0, 0, 0));

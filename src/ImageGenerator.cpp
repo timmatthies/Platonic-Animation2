@@ -33,14 +33,23 @@ void ImageGenerator::drawPoints(const std::vector<Vector2f>& points, const std::
     }
 }
 
-void ImageGenerator::drawLines(const LineSet& lineSet, const Vector3f& color) {
-    for (size_t x = 0; x < width; ++x) {
-        for (size_t y = 0; y < height; ++y) {
-            Vector2f point((float)x, (float)y);
-            float t = lineSet.get_t(point);
-            float squaredDistance = lineSet.squaredDistance(point);
-            imageData[y * width + x] += color * exp(-squaredDistance/4);
+std::vector<Vector2i> ImageGenerator::getMask(const LineSet& lineSet) const {
+    std::vector<Vector2i> mask;
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
+            mask.push_back(Vector2i(x, y));
         }
+    }
+    return mask;
+}
+
+void ImageGenerator::drawLines(const LineSet& lineSet, const Vector3f& color) {
+    std::vector<Vector2i> mask = getMask(lineSet);
+    for (const auto& pixel : mask) {
+        Vector2f point((float)pixel.x(), (float)pixel.y());
+        float t = lineSet.get_t(point);
+        float squaredDistance = lineSet.squaredDistance(point);
+        imageData[pixel.y() * width + pixel.x()] += color * exp(-squaredDistance/4);
     }
 }
 
