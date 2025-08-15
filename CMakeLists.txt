@@ -17,6 +17,8 @@ set(SOURCES
     src/ImageGenerator.cpp
     src/Line.cpp
     src/LineSet.cpp
+    src/Animator.cpp
+    src/Keyframe.cpp
 )
 
 # Create executable

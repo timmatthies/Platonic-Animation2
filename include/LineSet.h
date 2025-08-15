@@ -2,7 +2,10 @@
 #define LINESET_H
 
 #include <vector>
+#include <Eigen/Dense>
 #include "Line.h"
+
+using Vector2i = Eigen::Vector2i;
 
 class LineSet
 {
@@ -14,6 +17,7 @@ public:
     void addLine(const Line& line);
     float get_t(const Vector2f& point) const;
     float squaredDistance(const Vector2f& point) const;
+    std::vector<Vector2i> getMask(float size) const;
 
 private:
     std::vector<Line> lines;

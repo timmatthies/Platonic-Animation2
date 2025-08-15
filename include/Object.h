@@ -12,6 +12,7 @@ public:
     Object();
     std::vector<Vector3f> points;
     static Object getCube();
+    static Object getSquare();
     Vector3f position;
     Matrix3f rotation_matrix;
     void setPosition(const Vector3f& position);

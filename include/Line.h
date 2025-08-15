@@ -15,11 +15,11 @@ public:
     Vector2f getPoint(float t) const;
     float squaredDistance(const Vector2f& point, const float& t) const;
     float distance(const Vector2f& point, const float& t) const;
-private:
     Vector2f startPoint;
     Vector2f endPoint;
-    Vector2f direction;
     Vector2f normal;
+private:
+    Vector2f direction;
 };
 
 #endif // LINE_H

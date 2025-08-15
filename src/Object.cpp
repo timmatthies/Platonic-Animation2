@@ -39,6 +39,19 @@ Object Object::getCube() {
     return cube;
 }
 
+Object Object::getSquare() {
+    Object square;
+    // Define a path with the 4 vertices of a square
+    square.points = {
+        Vector3f(-1.0f, -1.0f, 0.0f),
+        Vector3f(1.0f,  -1.0f, 0.0f),
+        Vector3f(1.0f, 1.0f, 0.0f),
+        Vector3f(-1.0f, 1.0f, 0.0f),
+    };
+
+    return square;
+}
+
 Vector3f Object::getPositionAtTime(float time) const {
     int startIndex = static_cast<int>(time) % points.size();
     int endIndex = (startIndex + 1) % points.size();

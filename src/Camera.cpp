@@ -50,12 +50,12 @@ std::vector<Vector2f> Camera::getScreenPos(std::vector<Vector3f> &points) {
     return screenPositions;
 }
 
-LineSet Camera::convert_to_lines(const Object& object) {
+LineSet Camera::convert_to_lines(const Object& object) const {
     LineSet lineSet;
     // Convert the object's points into lines
-    for (size_t i = 0; i < object.points.size() - 1; ++i) {
+    for (size_t i = 0; i < object.points.size(); ++i) {
         Vector2f start = projectionMatrix * (object.rotation_matrix * object.points[i] + object.position);
-        Vector2f end = projectionMatrix * (object.rotation_matrix * object.points[i + 1] + object.position);
+        Vector2f end = projectionMatrix * (object.rotation_matrix * object.points[(i + 1) % object.points.size()] + object.position);
         start.x() = (start.x() / W) * w + w / 2; // Normalize and scale to viewport
         start.y() = (start.y() / H) * h + h / 2; // Normalize and scale to viewport
         end.x() = (end.x() / W) * w + w / 2; // Normalize and scale to viewport
@@ -63,4 +63,47 @@ LineSet Camera::convert_to_lines(const Object& object) {
         lineSet.addLine(Line(start, end));
     }
     return lineSet;
+}
+
+Vector2f Camera::get_screen_position(const Vector3f& world_position, const Object& object) const {
+    Vector2f screen_position = projectionMatrix * (object.rotation_matrix * world_position + object.position);
+    screen_position.x() = (screen_position.x() / W) * w + w / 2; // Normalize and scale to viewport
+    screen_position.y() = (screen_position.y() / H) * h + h / 2; // Normalize and scale to viewport
+    return screen_position;
+}
+
+LineSet Camera::convert_to_lines(const Object& object, float start_t, float length) const {
+    // Make start_t mod 1
+    
+    LineSet lineSet;
+    if(length >= 1.0f){
+        length = 1.0f;
+    }
+    
+    Vector2f p_s = get_point(start_t, object);
+
+    int k = std::floor(start_t * object.points.size());
+    float q = k * 1 / (float)object.points.size();
+
+    while (q > start_t-length)
+    {
+        Vector2f p_e = get_point(q, object);
+        lineSet.addLine(Line(p_s, p_e));
+        p_s = p_e;
+        k--;
+        q = k * 1 / (float)object.points.size();
+    }
+    Vector2f p_e = get_point(start_t - length, object);
+    lineSet.addLine(Line(p_s, p_e));
+    return lineSet;
+}Vector2f Camera::get_point(float t, const Object &object) const
+{
+    float o = t - std::floor(t);
+    int l = static_cast<int>(o * object.points.size());
+    float m = 1 / (float)object.points.size();
+
+    Vector2f v_s = get_screen_position(object.points[l], object);
+    Vector2f v_e = get_screen_position(object.points[(l + 1) % object.points.size()], object);
+
+    return v_s + (o - l * m) / m * (v_e - v_s);
 }

@@ -6,6 +6,7 @@
 
 ImageGenerator::ImageGenerator(int width, int height)
     : width(width), height(height), imageData(width * height, Vector3f(0, 0, 0)) {
+        conversion_factor = (width + height) / 2.0f/100.0f;
     }
 
 void ImageGenerator::drawPoints(const std::vector<Vector2f>& points, const std::vector<float>& intensity, const Vector3f& color) {
@@ -34,22 +35,18 @@ void ImageGenerator::drawPoints(const std::vector<Vector2f>& points, const std::
 }
 
 std::vector<Vector2i> ImageGenerator::getMask(const LineSet& lineSet) const {
-    std::vector<Vector2i> mask;
-    for (int x = 0; x < width; ++x) {
-        for (int y = 0; y < height; ++y) {
-            mask.push_back(Vector2i(x, y));
-        }
-    }
+    std::vector<Vector2i> mask = lineSet.getMask(conversion_factor*7.0f);
+
     return mask;
 }
 
-void ImageGenerator::drawLines(const LineSet& lineSet, const Vector3f& color) {
+void ImageGenerator::drawLines(const LineSet& lineSet, const Vector3f& color, const float& decay_length, const float& glow_length) {
     std::vector<Vector2i> mask = getMask(lineSet);
     for (const auto& pixel : mask) {
         Vector2f point((float)pixel.x(), (float)pixel.y());
         float t = lineSet.get_t(point);
         float squaredDistance = lineSet.squaredDistance(point);
-        imageData[pixel.y() * width + pixel.x()] += color * exp(-squaredDistance/4);
+        imageData[pixel.y() * width + pixel.x()] = color * exp(-sqrt(squaredDistance)/glow_length/(conversion_factor))*exp(-t/decay_length);
     }
 }
 
@@ -88,7 +85,5 @@ void ImageGenerator::saveImage(const std::string& filename) {
         std::cerr << "Error saving image: " << result << std::endl;
         std::cerr << save_bmp_str_result(result) << std::endl;
         return;
-    }else {
-        std::cout << "Image saved successfully to " << filename << std::endl;
     }
 }

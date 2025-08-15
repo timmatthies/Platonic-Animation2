@@ -16,7 +16,10 @@ public:
     Camera(int screenWidth, int screenHeight, bool isOrthographic);
     std::vector<Vector2f> getScreenPos(std::vector<Object> &objects);
     std::vector<Vector2f> getScreenPos(std::vector<Vector3f> &points);
-    LineSet convert_to_lines(const Object& object);
+    Vector2f get_screen_position(const Vector3f& world_position, const Object& object) const;
+    LineSet convert_to_lines(const Object& object) const;
+    LineSet convert_to_lines(const Object &object, float start_t, float length) const;
+    Vector2f get_point(float start_t, const Object &object) const;
     MatrixXf projectionMatrix;
 
 private:
