@@ -56,16 +56,7 @@ Keyframe Animator::get_keyframe(float time, InterpolationType type) const {
             break;
 
         case InterpolationType::Cubic:
-            // For cubic interpolation, we'd need more complex math
-            // For now, fall back to linear interpolation
-            // TODO: Implement proper cubic spline interpolation
-            interpolated.t = prevFrame.t + t * (nextFrame.t - prevFrame.t);
-            interpolated.length = prevFrame.length + t * (nextFrame.length - prevFrame.length);
-            interpolated.decay_length = prevFrame.decay_length + t * (nextFrame.decay_length - prevFrame.decay_length);
-            interpolated.glow_length = prevFrame.glow_length + t * (nextFrame.glow_length - prevFrame.glow_length);
-            interpolated.object_position = prevFrame.object_position + t * (nextFrame.object_position - prevFrame.object_position);
-            interpolated.object_rotation_axis = prevFrame.object_rotation_axis + t * (nextFrame.object_rotation_axis - prevFrame.object_rotation_axis);
-            interpolated.object_scale = prevFrame.object_scale + t * (nextFrame.object_scale - prevFrame.object_scale);
+            std::cerr << "Cubic Interpolation not implemented yet" << std::endl;
             break;
     }
 
@@ -125,7 +116,7 @@ void Animator::animate(const std::string& filename) const {
     }
     
     std::cout << "Animation saved successfully!" << std::endl;
-    system("ffmpeg.exe -framerate 10 -i imgs/animation_output_%05d.bmp -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p imgs/animation_output.mp4 -y");
+    // system("ffmpeg.exe -framerate 10 -i imgs/animation_output_%05d.bmp -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p imgs/animation_output.mp4 -y");
 }
 
 void Animator::save_keyframes(const std::string& filename) const {

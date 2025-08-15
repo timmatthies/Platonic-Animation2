@@ -4,6 +4,7 @@ Line::Line(const Vector2f& start, const Vector2f& end)
     : startPoint(start), endPoint(end) {
     direction = endPoint - startPoint;
     normal = Vector2f(-direction.y(), direction.x()).normalized();
+    direction_normed = direction.normalized();
 }
 
 Line::~Line() {

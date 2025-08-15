@@ -18,6 +18,7 @@ public:
     Vector2f startPoint;
     Vector2f endPoint;
     Vector2f normal;
+    Vector2f direction_normed;
 private:
     Vector2f direction;
 };

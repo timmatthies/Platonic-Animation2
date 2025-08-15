@@ -69,15 +69,20 @@ void ImageGenerator::normalize() {
 
 void ImageGenerator::saveImage(const std::string& filename) {
     std::vector<uint8_t> bmpData(width * height * 3);
-    normalize(); // Normalize the image data before saving
+    // normalize(); // Normalize the image data before saving
+
+    Vector3f avg_color = Vector3f(0.0f,0.0f,0.0f);
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             Vector3f color = imageData[y * width + x];
+            avg_color += color;
             bmpData[(y * width + x) * 3 + 0] = static_cast<uint8_t>(std::min(255.0f, color.x() * 255.0f));
             bmpData[(y * width + x) * 3 + 1] = static_cast<uint8_t>(std::min(255.0f, color.y() * 255.0f));
             bmpData[(y * width + x) * 3 + 2] = static_cast<uint8_t>(std::min(255.0f, color.z() * 255.0f));
         }
     }
+    avg_color = avg_color/(height*width);
+    std::cout << "Avg Color: (" << avg_color.x() << "," << avg_color.y() << "," << avg_color.z() << ")" << std::endl;
     // Save the image as a BMP file
     enum save_bmp_result result = save_bmp(filename.c_str(), width, height, bmpData.data());
     // Check the result of saving the BMP file

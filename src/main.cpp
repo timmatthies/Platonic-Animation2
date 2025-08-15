@@ -37,28 +37,37 @@ int main()
     // Initialize and use the Camera class here
     Camera camera(imageWidth, imageHeight);
     Object square = Object::getSquare();
-    Animator animator(camera, imageGen, square, 10); // 10 FPS
+    int fps = 30;
+    Animator animator(camera, imageGen, square, fps);
     Keyframe frame1;
     frame1.time = 0.0f;
     frame1.t = 0.0f;
+    frame1.length = 0.3f;
     Keyframe frame2 = frame1;
     frame2.time = 1.0f;
     frame2.t = 1.0f;
+    frame2.length = 0.3f;
     Keyframe frame3 = frame2;
-    frame3.time = 2.0f;
-    frame3.t = 3.0f;
-    frame3.decay_length *= 2.0f;
+    frame3.time = 4.0f;
+    frame3.t = 10.0f;
+    frame3.length = 1.0f;
+    frame3.decay_length *= 10.0f;
 
     animator.add_keyframe(frame1);
     animator.add_keyframe(frame2);
     animator.add_keyframe(frame3);
 
-    animator.save_keyframes("keyframes.txt");
+    // animator.save_keyframes("keyframes.txt");
     animator.load_keyframes("keyframes.txt");
+
+    // system("rm -r imgs");
+    // system("mkdir imgs");
     animator.animate("imgs/animation_output");
+    std::stringstream ss;
+    ss << "ffmpeg.exe -framerate " << fps << " -i imgs/animation_output_%05d.bmp -c:v libx264 -preset slow -crf 15 -pix_fmt yuv420p -movflags +faststart animation_output.mp4 -y";
     
     // High-quality video encoding with ffmpeg
-    system("ffmpeg.exe -framerate 10 -i imgs/animation_output_%05d.bmp -c:v libx264 -preset slow -crf 15 -pix_fmt yuv420p -movflags +faststart imgs/animation_output.mp4 -y");
+    system(ss.str().c_str());
 
 
     // Old test
