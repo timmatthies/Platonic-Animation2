@@ -13,10 +13,19 @@ public:
     std::vector<Vector3f> points;
     static Object getCube();
     static Object getSquare();
+    static Object getCircle();
+    static Object getThetra();
+    static Object getIco();
+    static Object getDodeca();
+    static Object getOcta();
+    static Object getObjectByName(const std::string& name);
+
     Vector3f position;
     Matrix3f rotation_matrix;
+    Matrix3f scale_matrix;
     void setPosition(const Vector3f& position);
     void setRotation(const Vector3f& axis, float angle);
+    void setScale(const Vector3f& scale);
     std::vector<Vector3f> getCurrentPoints(float time, float history_length, float history_spacing);
     Vector3f getPositionAtTime(float time) const;
 private:

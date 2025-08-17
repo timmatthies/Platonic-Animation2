@@ -5,8 +5,17 @@
 #include <algorithm>
 #include <iomanip>
 
-Animator::Animator(Camera cam, ImageGenerator imgGen, Object object, int fps)
-    : camera(cam), imageGenerator(imgGen), object(object), fps(fps) {
+Animator::Animator(std::string name, Vector3f color, Camera cam, ImageGenerator imgGen, Object object, int fps)
+    : name(name), color(color), camera(cam), imageGenerator(imgGen), object(object), fps(fps) {
+    std::random_device rd;
+    gen = std::mt19937(rd());
+    dist = std::normal_distribution<float>(0.0f, 1.0f);
+}
+
+Animator::Animator() {
+    std::random_device rd;
+    gen = std::mt19937(rd());
+    dist = std::normal_distribution<float>(0.0f, 1.0f);
 }
 
 Keyframe Animator::get_keyframe(float time, InterpolationType type) const {
@@ -53,6 +62,9 @@ Keyframe Animator::get_keyframe(float time, InterpolationType type) const {
             interpolated.object_position = prevFrame.object_position + t * (nextFrame.object_position - prevFrame.object_position);
             interpolated.object_rotation_axis = prevFrame.object_rotation_axis + t * (nextFrame.object_rotation_axis - prevFrame.object_rotation_axis);
             interpolated.object_scale = prevFrame.object_scale + t * (nextFrame.object_scale - prevFrame.object_scale);
+            interpolated.camera_shift_error = prevFrame.camera_shift_error + t * (nextFrame.camera_shift_error - prevFrame.camera_shift_error);
+            interpolated.camera_shear_error = prevFrame.camera_shear_error + t * (nextFrame.camera_shear_error - prevFrame.camera_shear_error);
+            interpolated.object_shift_error = prevFrame.object_shift_error + t * (nextFrame.object_shift_error - prevFrame.object_shift_error);
             break;
 
         case InterpolationType::Cubic:
@@ -61,6 +73,31 @@ Keyframe Animator::get_keyframe(float time, InterpolationType type) const {
     }
 
     return interpolated;
+}
+
+void Animator::render_frame(float time) {
+    Keyframe currentKeyframe = get_keyframe(time, InterpolationType::Linear);
+
+    // Apply keyframe to object copy
+    object.setPosition(currentKeyframe.object_position);
+    object.setRotation(currentKeyframe.object_rotation_axis.normalized(), 
+                       currentKeyframe.object_rotation_axis.norm());
+    object.setScale(currentKeyframe.object_scale*Vector3f(1.0f, 1.0f, 1.0f));
+    float x_err = dist(gen) * currentKeyframe.camera_shift_error*0.05f;
+    float y_err = dist(gen) * currentKeyframe.camera_shift_error*0.05f;
+    float shear_err = dist(gen) * currentKeyframe.camera_shear_error*0.05f;
+    float x_offset_err = dist(gen) * currentKeyframe.object_shift_error*0.05f;
+    float y_offset_err = dist(gen) * currentKeyframe.object_shift_error*0.05f;
+
+    camera.set_error(shear_err, x_err, y_err, x_offset_err, y_offset_err);
+    camera.set_proj_matrix();
+
+    // Generate lines and render
+    LineSet lineSet = camera.convert_to_lines(object, currentKeyframe.t, currentKeyframe.length);
+
+    imageGenerator.clear();
+    imageGenerator.drawLines(lineSet, currentKeyframe.decay_length, currentKeyframe.glow_length);
+    imageGenerator.drawPoint(lineSet.getStartPoint(), currentKeyframe.point_glow_length);
 }
 
 void Animator::animate(const std::string& filename) const {
@@ -100,6 +137,7 @@ void Animator::animate(const std::string& filename) const {
         animatedObject.setPosition(currentKeyframe.object_position);
         animatedObject.setRotation(currentKeyframe.object_rotation_axis.normalized(), 
                           currentKeyframe.object_rotation_axis.norm());
+        animatedObject.setScale(currentKeyframe.object_scale*Vector3f(1.0f, 1.0f, 1.0f));
         
         // Generate lines and render
         LineSet lineSet = camera.convert_to_lines(animatedObject, currentKeyframe.t, currentKeyframe.length);
@@ -107,12 +145,13 @@ void Animator::animate(const std::string& filename) const {
         // Create a copy of imageGenerator to modify
         ImageGenerator imgGen = imageGenerator;
         imgGen.clear();
-        imgGen.drawLines(lineSet, Vector3f(1.0f, 0.0f, 0.0f), currentKeyframe.decay_length, currentKeyframe.glow_length); // Red color
-        
+        imgGen.drawLines(lineSet, currentKeyframe.decay_length, currentKeyframe.glow_length);
+        imgGen.drawPoint(lineSet.getStartPoint(), currentKeyframe.point_glow_length);
+
         // Create filename with frame number
         std::stringstream ss;
         ss << filename << "_" << std::setfill('0') << std::setw(5) << frame << ".bmp";
-        imgGen.saveImage(ss.str());
+        imgGen.saveImage(ss.str(), color);
     }
     
     std::cout << "Animation saved successfully!" << std::endl;
@@ -128,8 +167,8 @@ void Animator::save_keyframes(const std::string& filename) const {
 
     // Write header
     file << "# Keyframe data file\n";
-    file << "# Format: time t length decay_length glow_length pos_x pos_y pos_z rot_x rot_y rot_z scale_x scale_y scale_z\n";
-    file << keyframes.size() << "\n";
+    file << "# time   t        length   decay_le glow_len pos_x    pos_y    pos_z    rot_x    rot_y    rot_z    scale_x  shift_e  screw_e  obj_sh_e \n";
+    // file << keyframes.size() << "\n";
 
     // Write keyframes
     for (const auto& kf : keyframes) {
@@ -145,9 +184,11 @@ void Animator::save_keyframes(const std::string& filename) const {
              << kf.object_rotation_axis.x() << " "
              << kf.object_rotation_axis.y() << " "
              << kf.object_rotation_axis.z() << " "
-             << kf.object_scale.x() << " "
-             << kf.object_scale.y() << " "
-             << kf.object_scale.z() << "\n";
+             << kf.object_scale << " "
+             << kf.camera_shift_error << " "
+             << kf.camera_shear_error << " "
+             << kf.object_shift_error << " \n";
+
     }
 
     file.close();
@@ -169,21 +210,9 @@ void Animator::load_keyframes(const std::string& filename) {
         continue;
     }
 
-    // Read number of keyframes
-    int numKeyframes;
-    if (!(std::stringstream(line) >> numKeyframes)) {
-        std::cerr << "Error reading number of keyframes" << std::endl;
-        return;
-    }
-
-    keyframes.reserve(numKeyframes);
-
-    // Read keyframes
-    for (int i = 0; i < numKeyframes; ++i) {
-        if (!std::getline(file, line)) {
-            std::cerr << "Unexpected end of file" << std::endl;
-            break;
-        }
+    // Read keyframes if line is empty or it is the last line stop
+    int i = 0;
+    do{
 
         std::stringstream ss(line);
         Keyframe kf;
@@ -191,13 +220,14 @@ void Animator::load_keyframes(const std::string& filename) {
         if (!(ss >> kf.time >> kf.t >> kf.length >> kf.decay_length >> kf.glow_length
               >> kf.object_position.x() >> kf.object_position.y() >> kf.object_position.z()
               >> kf.object_rotation_axis.x() >> kf.object_rotation_axis.y() >> kf.object_rotation_axis.z()
-              >> kf.object_scale.x() >> kf.object_scale.y() >> kf.object_scale.z())) {
+              >> kf.object_scale >> kf.camera_shift_error >> kf.camera_shear_error >> kf.object_shift_error)) {
             std::cerr << "Error parsing keyframe " << i << std::endl;
             continue;
         }
 
         keyframes.push_back(kf);
-    }
+        i++;
+    } while (std::getline(file, line) && !line.empty());
 
     // Sort keyframes by time
     std::sort(keyframes.begin(), keyframes.end(),
@@ -214,4 +244,32 @@ void Animator::add_keyframe(const Keyframe& keyframe) {
     
     keyframes.insert(it, keyframe);
     std::cout << "Added keyframe at time " << keyframe.time << std::endl;
+}
+
+Vector3f Animator::get_color() const {
+    return color;
+}
+
+std::string Animator::get_name() const {
+    return name;
+}
+
+float Animator::get_start_time() const {
+    if (keyframes.empty()) {
+        std::cerr << "No keyframes available to determine start time." << std::endl;
+        return 0.0f;
+    }
+    return keyframes.front().time;
+}
+
+float Animator::get_end_time() const {
+    if (keyframes.empty()) {
+        std::cerr << "No keyframes available to determine end time." << std::endl;
+        return 0.0f;
+    }
+    return keyframes.back().time;
+}
+
+void Animator::clear() {
+    imageGenerator.clear();
 }

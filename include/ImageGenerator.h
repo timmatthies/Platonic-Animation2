@@ -9,22 +9,27 @@ using namespace Eigen;
 
 class ImageGenerator {
 public:
+    ImageGenerator();
     ImageGenerator(int width, int height);
-    void drawPoints(const std::vector<Vector2f>& points, const std::vector<float>& intensity, const Vector3f& color);
-    void drawLines(const LineSet& lineSet, const Vector3f& color, const float& decay_length=0.25f, const float& glow_length=0.5f);
-    void saveImage(const std::string& filename);
+    void drawPoints(const std::vector<Vector2f>& points, const std::vector<float>& intensity);
+    void drawLines(const LineSet& lineSet, const float& decay_length=0.25f, const float& glow_length=0.5f);
+    void drawPoint(const Vector2f& point, const float& glow_length);
+    void saveImage(const std::string& filename, const Vector3f& color);
     std::vector<Vector2i> getMask(const LineSet& lineSet) const;
     void normalize();
     void clear() {
-        std::fill(imageData.begin(), imageData.end(), Vector3f(0, 0, 0));
-    }
+        std::fill(alpha, alpha + width * height * 3, 0.0f);
+    };
+    float* get_alpha() {return alpha;}
+
 
 private:
     int width;
     int height;
-    std::vector<Vector3f> imageData;
+    float* alpha;
     float gauss(float x, float y, float sigma);
     float conversion_factor = 1.0f;
+    int max_radius = 7;
 };
 
 #endif // IMAGE_GENERATOR_H

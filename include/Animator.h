@@ -2,24 +2,40 @@
 #define ANIMATOR_H
 
 #include "Camera.h"
+#include <random>
 #include "ImageGenerator.h"
 #include "Keyframe.h"
 
 class Animator
 {
 private:
-    std::vector<Keyframe> keyframes;
+    std::string name;
+    Vector3f color;
     Camera camera;
     ImageGenerator imageGenerator;
     Object object;
     int fps;
+    std::vector<Keyframe> keyframes;
+    std::mt19937 gen;
+    std::normal_distribution<float> dist;
 public:
-    Animator(Camera cam, ImageGenerator imgGen, Object object, int fps);
+    Animator();
+    Animator(std::string name, Vector3f color,Camera cam, ImageGenerator imgGen, Object object, int fps);
     Keyframe get_keyframe(float time, InterpolationType type) const;
     void animate(const std::string& filename) const; //Saves the entire animation as images (bmp)
+    void render_frame(float time);
     void save_keyframes(const std::string& filename) const; //Saves the keyframes in a txt file
     void load_keyframes(const std::string& filename);
     void add_keyframe(const Keyframe& keyframe);
+    Vector3f get_color() const;
+    std::string get_name() const;
+    float get_start_time() const;
+    float get_end_time() const;
+    void clear();
+    float* get_alpha() {
+        return imageGenerator.get_alpha();
+    }
+
 };
 
 

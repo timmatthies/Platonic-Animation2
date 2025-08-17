@@ -4,12 +4,23 @@
 #include "ImageGenerator.h"
 #include <iostream>
 
-ImageGenerator::ImageGenerator(int width, int height)
-    : width(width), height(height), imageData(width * height, Vector3f(0, 0, 0)) {
+ImageGenerator::ImageGenerator()
+    : width(100), height(100) {
         conversion_factor = (width + height) / 2.0f/100.0f;
+        max_radius = 7*conversion_factor;
+        alpha = new float[width * height * 3];
+        std::fill(alpha, alpha + width * height * 3, 0.0f);
     }
 
-void ImageGenerator::drawPoints(const std::vector<Vector2f>& points, const std::vector<float>& intensity, const Vector3f& color) {
+ImageGenerator::ImageGenerator(int width, int height)
+    : width(width), height(height) {
+        conversion_factor = (width + height) / 2.0f/100.0f;
+        max_radius = 7*conversion_factor;
+        alpha = new float[width * height * 3];
+        std::fill(alpha, alpha + width * height * 3, 0.0f);
+    }
+
+void ImageGenerator::drawPoints(const std::vector<Vector2f>& points, const std::vector<float>& intensity) {
     // Create a gaussian around each point
     float sigma = 2.0f; // Standard deviation for the Gaussian
     int threshold_sigma = ceil(3.0f * sigma); // Threshold for considering points within 3 sigma
@@ -26,9 +37,7 @@ void ImageGenerator::drawPoints(const std::vector<Vector2f>& points, const std::
                 if( dy < 0 || dy >= height) continue; // Skip out of bounds y
                 // Calculate the Gaussian value at this pixel
                 float gaussian_value = gauss((float)dx - x, (float)dy - y, sigma);
-                // Scale the color by intensity and Gaussian value
-                Vector3f pixelColor = color * (intensity[i] * gaussian_value);
-                imageData[dy * width + dx] += pixelColor;
+                alpha[dy * width + dx] += (intensity[i] * gaussian_value);
             }
         }
     }
@@ -40,13 +49,37 @@ std::vector<Vector2i> ImageGenerator::getMask(const LineSet& lineSet) const {
     return mask;
 }
 
-void ImageGenerator::drawLines(const LineSet& lineSet, const Vector3f& color, const float& decay_length, const float& glow_length) {
+void ImageGenerator::drawLines(const LineSet& lineSet, const float& decay_length, const float& glow_length) {
     std::vector<Vector2i> mask = getMask(lineSet);
-    for (const auto& pixel : mask) {
-        Vector2f point((float)pixel.x(), (float)pixel.y());
+    #pragma omp parallel for
+    for (size_t i = 0; i < mask.size(); ++i) {
+        Vector2f point((float)mask[i].x(), (float)mask[i].y());
         float t = lineSet.get_t(point);
         float squaredDistance = lineSet.squaredDistance(point);
-        imageData[pixel.y() * width + pixel.x()] = color * exp(-sqrt(squaredDistance)/glow_length/(conversion_factor))*exp(-t/decay_length);
+        alpha[mask[i].y() * width + mask[i].x()] = exp(-sqrt(squaredDistance)/glow_length/(conversion_factor))*exp(-t/decay_length/conversion_factor*100.0f);
+    }
+}
+
+void ImageGenerator::drawPoint(const Vector2f& point, const float& glow_length) {
+    int ix = (int)point.x();
+    int iy = (int)point.y();
+    for (int dx = ix - max_radius; dx <= ix + max_radius; ++dx) {
+        if (dx < 0 || dx >= width) continue; // Skip out of bounds x
+        for (int dy = iy - max_radius; dy <= iy + max_radius; ++dy) {
+            if (dy < 0 || dy >= height) continue; // Skip out of bounds y
+            float squaredDistance = (dx - ix) * (dx - ix) + (dy - iy) * (dy - iy);
+            float prev_mag = alpha[dy * width + dx];
+            float new_mag = exp(-sqrt(squaredDistance)/glow_length/(conversion_factor));
+            if (prev_mag>new_mag) {
+                // If the previous magnitude is greater, skip this pixel
+                continue;
+            } else if (prev_mag < new_mag) {
+                // If the new magnitude is greater, update the pixel color
+                alpha[dy * width + dx] = exp(-sqrt(squaredDistance)/glow_length/(conversion_factor));
+            }
+            // imageData[dy * width + dx] += color * exp(-sqrt(squaredDistance) / glow_length / (conversion_factor));
+            // imageData[dy * width + dx] = imageData[dy * width + dx] / 2.0f;
+        }
     }
 }
 
@@ -54,31 +87,18 @@ float ImageGenerator::gauss(float x, float y, float sigma) {
     return std::exp(-(x * x + y * y) / (2 * sigma * sigma));
 }
 
-void ImageGenerator::normalize() {
-    float maxIntensity = 0.0f;
-    for (const auto& pixel : imageData) {
-        maxIntensity = std::max(maxIntensity, pixel.squaredNorm());
-    }
-    maxIntensity = std::sqrt(maxIntensity);
-    if (maxIntensity > 0.0f) {
-        for (auto& pixel : imageData) {
-            pixel /= maxIntensity;
-        }
-    }
-}
-
-void ImageGenerator::saveImage(const std::string& filename) {
+void ImageGenerator::saveImage(const std::string& filename, const Vector3f& color) {
     std::vector<uint8_t> bmpData(width * height * 3);
     // normalize(); // Normalize the image data before saving
 
     Vector3f avg_color = Vector3f(0.0f,0.0f,0.0f);
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            Vector3f color = imageData[y * width + x];
-            avg_color += color;
-            bmpData[(y * width + x) * 3 + 0] = static_cast<uint8_t>(std::min(255.0f, color.x() * 255.0f));
-            bmpData[(y * width + x) * 3 + 1] = static_cast<uint8_t>(std::min(255.0f, color.y() * 255.0f));
-            bmpData[(y * width + x) * 3 + 2] = static_cast<uint8_t>(std::min(255.0f, color.z() * 255.0f));
+            Vector3f c = color*alpha[y * width + x];
+            avg_color += c;
+            bmpData[(y * width + x) * 3 + 0] = static_cast<uint8_t>(std::min(255.0f, c.x() * 255.0f));
+            bmpData[(y * width + x) * 3 + 1] = static_cast<uint8_t>(std::min(255.0f, c.y() * 255.0f));
+            bmpData[(y * width + x) * 3 + 2] = static_cast<uint8_t>(std::min(255.0f, c.z() * 255.0f));
         }
     }
     avg_color = avg_color/(height*width);

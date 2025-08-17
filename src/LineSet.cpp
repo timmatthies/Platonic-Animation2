@@ -71,3 +71,8 @@ std::vector<Vector2i> LineSet::getMask(float size) const {
     
     return mask;
 }
+
+Vector2f LineSet::getStartPoint() const
+{
+    return lines.front().startPoint;
+}
