@@ -79,7 +79,7 @@ void Animator::render_frame(float time) {
     Keyframe currentKeyframe = get_keyframe(time, InterpolationType::Linear);
 
     // Apply keyframe to object copy
-    object.setPosition(currentKeyframe.object_position);
+    object.setPosition(currentKeyframe.object_position, currentKeyframe.r, currentKeyframe.phi);
     object.setRotation(currentKeyframe.object_rotation_axis.normalized(), 
                        currentKeyframe.object_rotation_axis.norm());
     object.setScale(currentKeyframe.object_scale*Vector3f(1.0f, 1.0f, 1.0f));
@@ -127,14 +127,14 @@ void Animator::animate(const std::string& filename) const {
 
     for (int frame = 0; frame < totalFrames; ++frame) {
         float currentTime = startTime + frame * timeStep;
-        
+
         // Get interpolated keyframe for current time
         Keyframe currentKeyframe = get_keyframe(currentTime, InterpolationType::Linear);
         std::cout << "Processing frame " << frame + 1 << " of " << totalFrames << std::endl;
         std::cout << "Current time: " << currentTime << ", Keyframe time: " << currentKeyframe.t << std::endl;
 
         // Apply keyframe to object copy
-        animatedObject.setPosition(currentKeyframe.object_position);
+        animatedObject.setPosition(currentKeyframe.object_position, currentKeyframe.r, currentKeyframe.phi);
         animatedObject.setRotation(currentKeyframe.object_rotation_axis.normalized(), 
                           currentKeyframe.object_rotation_axis.norm());
         animatedObject.setScale(currentKeyframe.object_scale*Vector3f(1.0f, 1.0f, 1.0f));
@@ -167,27 +167,30 @@ void Animator::save_keyframes(const std::string& filename) const {
 
     // Write header
     file << "# Keyframe data file\n";
-    file << "# time   t        length   decay_le glow_len pos_x    pos_y    pos_z    rot_x    rot_y    rot_z    scale_x  shift_e  screw_e  obj_sh_e \n";
+
+    file << "# time   t          length    decay_le  glow_len  pos_x     pos_y     pos_z     rot_x     rot_y     rot_z     scale_x   shift_e   screw_e   obj_sh_e  polar_r   polar_phi \n";
     // file << keyframes.size() << "\n";
 
     // Write keyframes
     for (const auto& kf : keyframes) {
         file << std::fixed << std::setprecision(6);
-        file << kf.time << " "
-             << kf.t << " "
-             << kf.length << " "
-             << kf.decay_length << " "
-             << kf.glow_length << " "
-             << kf.object_position.x() << " "
-             << kf.object_position.y() << " "
-             << kf.object_position.z() << " "
-             << kf.object_rotation_axis.x() << " "
-             << kf.object_rotation_axis.y() << " "
-             << kf.object_rotation_axis.z() << " "
-             << kf.object_scale << " "
-             << kf.camera_shift_error << " "
-             << kf.camera_shear_error << " "
-             << kf.object_shift_error << " \n";
+        file << kf.time << "  "
+             << kf.t << "  "
+             << kf.length << "  "
+             << kf.decay_length << "  "
+             << kf.glow_length << "  "
+             << kf.object_position.x() << "  "
+             << kf.object_position.y() << "  "
+             << kf.object_position.z() << "  "
+             << kf.object_rotation_axis.x() << "  "
+             << kf.object_rotation_axis.y() << "  "
+             << kf.object_rotation_axis.z() << "  "
+             << kf.object_scale << "  "
+             << kf.camera_shift_error << "  "
+             << kf.camera_shear_error << "  "
+             << kf.object_shift_error << "  "
+             << kf.r << "  "
+             << kf.phi << "  \n";
 
     }
 
@@ -220,7 +223,7 @@ void Animator::load_keyframes(const std::string& filename) {
         if (!(ss >> kf.time >> kf.t >> kf.length >> kf.decay_length >> kf.glow_length
               >> kf.object_position.x() >> kf.object_position.y() >> kf.object_position.z()
               >> kf.object_rotation_axis.x() >> kf.object_rotation_axis.y() >> kf.object_rotation_axis.z()
-              >> kf.object_scale >> kf.camera_shift_error >> kf.camera_shear_error >> kf.object_shift_error)) {
+              >> kf.object_scale >> kf.camera_shift_error >> kf.camera_shear_error >> kf.object_shift_error >> kf.r >> kf.phi)) {
             std::cerr << "Error parsing keyframe " << i << std::endl;
             continue;
         }

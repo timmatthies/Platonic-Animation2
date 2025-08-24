@@ -23,7 +23,9 @@ public:
     Vector3f position;
     Matrix3f rotation_matrix;
     Matrix3f scale_matrix;
-    void setPosition(const Vector3f& position);
+    float polar_r;
+    float polar_phi;
+    void setPosition(const Vector3f& position, const float& r, const float& phi);
     void setRotation(const Vector3f& axis, float angle);
     void setScale(const Vector3f& scale);
     std::vector<Vector3f> getCurrentPoints(float time, float history_length, float history_spacing);

@@ -6,7 +6,7 @@ using namespace Eigen;
 
 Object::Object() {
     // Initialize the object with some default points. The points define a path of a triangle.
-    setPosition(Vector3f(0.0f, 0.0f, 0.0f));
+    setPosition(Vector3f(0.0f, 0.0f, 0.0f),0.0f,0.0f);
     setRotation(Vector3f(0.0f, 1.0f, 0.0f), 0.0f); // No rotation by default
     
 }
@@ -147,8 +147,10 @@ std::vector<Vector3f> Object::getCurrentPoints(float time, float history_length,
 }
 
 
-void Object::setPosition(const Vector3f& position) {
-    this->position = Vector3f(position.x(), position.y(), position.z());
+void Object::setPosition(const Vector3f& position, const float& r, const float& phi) {
+    this->polar_phi = phi;
+    this->polar_r = r;
+    this->position = Vector3f(position.x(), position.y(), position.z()) + r*Vector3f(std::cos(phi), std::sin(phi), 0.0f);
 }
 
 void Object::setRotation(const Vector3f& axis, float angle) {

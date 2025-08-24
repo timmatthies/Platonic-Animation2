@@ -23,6 +23,8 @@ struct Keyframe
     float camera_shift_error = 0.0f;
     float object_shift_error = 0.0f;
     float camera_shear_error = 0.0f;
+    float r = 0.0f;
+    float phi = 0.0f;
 
     Keyframe() = default;
     Keyframe(const Keyframe&) = default;

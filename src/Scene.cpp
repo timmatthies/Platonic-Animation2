@@ -8,9 +8,10 @@
 Scene::Scene(std::string path) {
     // See if there is a file called "path/scene.txt"
     std::ifstream file(path + "/scene.txt");
-
+    
     // Does it exist?
     if (file.is_open()) {
+        std::filesystem::create_directory(path + "/imgs");
         std::cout << "Loading scene from " << path << "/scene.txt" << std::endl;
         std::string line;
         // First lines give the screen height, the screen width, the fps, and the background color
