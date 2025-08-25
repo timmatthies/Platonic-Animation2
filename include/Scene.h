@@ -20,6 +20,7 @@ private:
     int fps;
     int width;
     int height;
+    int upscale_factor;
     Vector3f backgroundColor;
     std::string img_path;
 };

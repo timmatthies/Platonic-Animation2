@@ -55,16 +55,16 @@ Keyframe Animator::get_keyframe(float time, InterpolationType type) const {
     switch (type) {
         case InterpolationType::Linear:
             // Linear interpolation
-            interpolated.t = prevFrame.t + t * (nextFrame.t - prevFrame.t);
-            interpolated.length = prevFrame.length + t * (nextFrame.length - prevFrame.length);
-            interpolated.decay_length = prevFrame.decay_length + t * (nextFrame.decay_length - prevFrame.decay_length);
-            interpolated.glow_length = prevFrame.glow_length + t * (nextFrame.glow_length - prevFrame.glow_length);
-            interpolated.object_position = prevFrame.object_position + t * (nextFrame.object_position - prevFrame.object_position);
-            interpolated.object_rotation_axis = prevFrame.object_rotation_axis + t * (nextFrame.object_rotation_axis - prevFrame.object_rotation_axis);
-            interpolated.object_scale = prevFrame.object_scale + t * (nextFrame.object_scale - prevFrame.object_scale);
-            interpolated.camera_shift_error = prevFrame.camera_shift_error + t * (nextFrame.camera_shift_error - prevFrame.camera_shift_error);
-            interpolated.camera_shear_error = prevFrame.camera_shear_error + t * (nextFrame.camera_shear_error - prevFrame.camera_shear_error);
-            interpolated.object_shift_error = prevFrame.object_shift_error + t * (nextFrame.object_shift_error - prevFrame.object_shift_error);
+            interpolated.t = prevFrame.t + prevFrame.applyCurve(t) * (nextFrame.t - prevFrame.t);
+            interpolated.length = prevFrame.length + prevFrame.applyCurve(t) * (nextFrame.length - prevFrame.length);
+            interpolated.decay_length = prevFrame.decay_length + prevFrame.applyCurve(t) * (nextFrame.decay_length - prevFrame.decay_length);
+            interpolated.glow_length = prevFrame.glow_length + prevFrame.applyCurve(t) * (nextFrame.glow_length - prevFrame.glow_length);
+            interpolated.object_position = prevFrame.object_position + prevFrame.applyCurve(t) * (nextFrame.object_position - prevFrame.object_position);
+            interpolated.object_rotation_axis = prevFrame.object_rotation_axis + prevFrame.applyCurve(t) * (nextFrame.object_rotation_axis - prevFrame.object_rotation_axis);
+            interpolated.object_scale = prevFrame.object_scale + prevFrame.applyCurve(t) * (nextFrame.object_scale - prevFrame.object_scale);
+            interpolated.camera_shift_error = prevFrame.camera_shift_error + prevFrame.applyCurve(t) * (nextFrame.camera_shift_error - prevFrame.camera_shift_error);
+            interpolated.camera_shear_error = prevFrame.camera_shear_error + prevFrame.applyCurve(t) * (nextFrame.camera_shear_error - prevFrame.camera_shear_error);
+            interpolated.object_shift_error = prevFrame.object_shift_error + prevFrame.applyCurve(t) * (nextFrame.object_shift_error - prevFrame.object_shift_error);
             break;
 
         case InterpolationType::Cubic:
@@ -168,7 +168,7 @@ void Animator::save_keyframes(const std::string& filename) const {
     // Write header
     file << "# Keyframe data file\n";
 
-    file << "# time   t          length    decay_le  glow_len  pos_x     pos_y     pos_z     rot_x     rot_y     rot_z     scale_x   shift_e   screw_e   obj_sh_e  polar_r   polar_phi \n";
+    file << "# time   t          length    decay_le  glow_len  pos_x     pos_y     pos_z     rot_x     rot_y     rot_z     scale_x   shift_e   screw_e   obj_sh_e  polar_r   polar_phi  curve \n";
     // file << keyframes.size() << "\n";
 
     // Write keyframes
@@ -219,13 +219,20 @@ void Animator::load_keyframes(const std::string& filename) {
 
         std::stringstream ss(line);
         Keyframe kf;
-        
+        std::string key_frame_curve;
+
+        // Try to read all numeric fields first
         if (!(ss >> kf.time >> kf.t >> kf.length >> kf.decay_length >> kf.glow_length
               >> kf.object_position.x() >> kf.object_position.y() >> kf.object_position.z()
               >> kf.object_rotation_axis.x() >> kf.object_rotation_axis.y() >> kf.object_rotation_axis.z()
               >> kf.object_scale >> kf.camera_shift_error >> kf.camera_shear_error >> kf.object_shift_error >> kf.r >> kf.phi)) {
             std::cerr << "Error parsing keyframe " << i << std::endl;
             continue;
+        }
+
+        // Try to read curve string if present
+        if (ss >> key_frame_curve) {
+            kf.setCurve(key_frame_curve);
         }
 
         keyframes.push_back(kf);

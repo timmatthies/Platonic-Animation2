@@ -1,5 +1,5 @@
-Width Height FPS BackgroundColor
-100 100 10 0.1529 0.1373 0.1804
+Width Height FPS BackgroundColor UpscaleFac
+400 400 20 0.1529 0.1373 0.1804 2
 0.396 1 0.22 Circle Cube.txt
 1 0.22 0.708 Circle Thetra.txt
 0.22 1 0.98 Circle Octa.txt

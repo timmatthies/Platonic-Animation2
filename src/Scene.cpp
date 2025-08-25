@@ -19,7 +19,7 @@ Scene::Scene(std::string path) {
 
         // Skip first line
         std::getline(file, line);
-        if (file >> width >> height >> fps >> bc_r >> bc_g >> bc_b) {
+        if (file >> width >> height >> fps >> bc_r >> bc_g >> bc_b >> upscale_factor) {
             // Create the camera, image generator, and object with the loaded parameters
             backgroundColor = Vector3f(bc_r, bc_g, bc_b);
         }
@@ -50,6 +50,7 @@ Scene::Scene(std::string path) {
         int height = 100;
         int width = 100;
         int fps = 10;
+        int upscale_factor = 5;
         Vector3f backgroundColor(0.1529f, 0.1373f, 0.1804f); // Default background color
         // If the file does not exist, create a default Animator and save it to filename
         Camera cam = Camera(width, height);
@@ -124,9 +125,9 @@ Scene::Scene(std::string path) {
         // Save the default scene to the specified filename
         std::ofstream outFile(path + "/scene.txt");
         if (outFile.is_open()) {
-            outFile << "Width Height FPS BackgroundColor\n";
+            outFile << "Width Height FPS BackgroundColor UpscaleFactor\n";
             // Write the camera and image generator parameters
-            outFile << width << " " << height << " " << fps << " " << backgroundColor.x() << " " << backgroundColor.y() << " " << backgroundColor.z() << "\n";
+            outFile << width << " " << height << " " << fps << " " << backgroundColor.x() << " " << backgroundColor.y() << " " << backgroundColor.z() << " " << upscale_factor << "\n";
             for (const auto& animator : animators) {
                 outFile << animator.get_color().x() << " " << animator.get_color().y() << " " << animator.get_color().z() << " " << animator.get_name() << " " << animator.get_name() << ".txt" << "\n";
                 animator.save_keyframes(path + "/keyframes/" + animator.get_name() + ".txt");
@@ -154,6 +155,7 @@ void Scene::animate() {
     }
 
     std::vector<Vector3f> screen(width * height, Vector3f(0.0f, 0.0f, 0.0f));
+    std::vector<Vector3f> upscaled_screen(width * height * upscale_factor * upscale_factor, Vector3f(0.0f, 0.0f, 0.0f));
     std::vector<float> alpha(width * height, 0.0f);
 
     for (int i = 0; i < num_frames; i++)
@@ -183,36 +185,63 @@ void Scene::animate() {
                 screen[m] = backgroundColor;
             }
         }
-        
-        // Save the current frame as an image
+
         save_image(i, screen);
+        
+        
+
+        // Save the current frame as an image
         std::fill(screen.begin(), screen.end(), Vector3f(0.0f, 0.0f, 0.0f)); // Reset screen for next frame
         std::fill(alpha.begin(), alpha.end(), 0.0f); // Reset alpha for next frame
     }
     std::cout << "Animation completed and saved to " << img_path << std::endl;
 
+    // Load audio 
     std::stringstream ss;
-    ss << "ffmpeg.exe -framerate " << fps << " -i " << img_path << "/frame_%05d.bmp -c:v libx264 -preset slow -crf 15 -pix_fmt yuv420p -movflags +faststart " << img_path << "/animation_output.mp4 -y";
+    ss << "ffmpeg -ss " << start_time << " -i PL.mp3 -t " << (end_time - start_time) << " -acodec copy " << img_path << "/audio.mp3 -y";
+    system(ss.str().c_str());
+    ss.str("");
+
+    ss << "ffmpeg -framerate " << fps << " -i " << img_path << "/frame_%05d.bmp -i " << img_path << "/audio.mp3 -c:v libx264 -preset slow -crf 15 -pix_fmt yuv420p -movflags +faststart " << img_path << "/animation_output.mp4 -y ";
 
     // High-quality video encoding with ffmpeg
     system(ss.str().c_str());
 }
 
 void Scene::save_image(const int& frame_number, const std::vector<Vector3f>& screen) const {
-    std::vector<uint8_t> bmpData(width * height * 3);
+    std::vector<uint8_t> bmpData(width * height * 3 * upscale_factor * upscale_factor);
     // normalize(); // Normalize the image data before saving
 
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            Vector3f c = screen[y * width + x];
-            bmpData[(y * width + x) * 3 + 0] = static_cast<uint8_t>(std::min(255.0f, c.x() * 255.0f));
-            bmpData[(y * width + x) * 3 + 1] = static_cast<uint8_t>(std::min(255.0f, c.y() * 255.0f));
-            bmpData[(y * width + x) * 3 + 2] = static_cast<uint8_t>(std::min(255.0f, c.z() * 255.0f));
+    if (upscale_factor == 1){
+        #pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                Vector3f c = screen[y * width + x];
+                bmpData[(y * width + x) * 3 + 0] = static_cast<uint8_t>(std::min(255.0f, c.x() * 255.0f));
+                bmpData[(y * width + x) * 3 + 1] = static_cast<uint8_t>(std::min(255.0f, c.y() * 255.0f));
+                bmpData[(y * width + x) * 3 + 2] = static_cast<uint8_t>(std::min(255.0f, c.z() * 255.0f));
+            }
+        }
+    }else{
+        #pragma omp parallel for
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                Vector3f c = screen[y * width + x];
+                for (int dy = 0; dy < upscale_factor; ++dy) {
+                    for (int dx = 0; dx < upscale_factor; ++dx) {
+                        int upscaled_x = x * upscale_factor + dx;
+                        int upscaled_y = y * upscale_factor + dy;
+                        bmpData[(upscaled_y * width * upscale_factor + upscaled_x) * 3 + 0] = static_cast<uint8_t>(std::min(255.0f, c.x() * 255.0f));
+                        bmpData[(upscaled_y * width * upscale_factor + upscaled_x) * 3 + 1] = static_cast<uint8_t>(std::min(255.0f, c.y() * 255.0f));
+                        bmpData[(upscaled_y * width * upscale_factor + upscaled_x) * 3 + 2] = static_cast<uint8_t>(std::min(255.0f, c.z() * 255.0f));
+                    }
+                }
+            }
         }
     }
     std::stringstream ss;
     ss << img_path << "/frame_" << std::setfill('0') << std::setw(5) << frame_number << ".bmp";
-    enum save_bmp_result result = save_bmp(ss.str().c_str(), width, height, bmpData.data());
+    enum save_bmp_result result = save_bmp(ss.str().c_str(), width * upscale_factor, height * upscale_factor, bmpData.data());
     // Check the result of saving the BMP file
     if (result != SAVE_BMP_SUCCESS) {
         std::cerr << "!!!Error saving image: " << result << std::endl;
