@@ -18,6 +18,7 @@ private:
     std::vector<Keyframe> keyframes;
     std::mt19937 gen;
     std::normal_distribution<float> dist;
+    bool debug_mode = false;
 public:
     Animator();
     Animator(std::string name, Vector3f color,Camera cam, ImageGenerator imgGen, Object object, int fps);
@@ -35,6 +36,7 @@ public:
     float* get_alpha() {
         return imageGenerator.get_alpha();
     }
+    void set_debug_mode(bool mode);
 
 };
 

@@ -18,6 +18,11 @@ Animator::Animator() {
     dist = std::normal_distribution<float>(0.0f, 1.0f);
 }
 
+void Animator::set_debug_mode(bool mode) {
+    debug_mode = mode;
+    imageGenerator.set_debug_mode(mode);
+}
+
 Keyframe Animator::get_keyframe(float time, InterpolationType type) const {
     if (keyframes.empty()) {
         // Return a default keyframe if no keyframes exist
@@ -66,6 +71,8 @@ Keyframe Animator::get_keyframe(float time, InterpolationType type) const {
             interpolated.camera_shear_error = prevFrame.camera_shear_error + prevFrame.applyCurve(t) * (nextFrame.camera_shear_error - prevFrame.camera_shear_error);
             interpolated.object_shift_error = prevFrame.object_shift_error + prevFrame.applyCurve(t) * (nextFrame.object_shift_error - prevFrame.object_shift_error);
             interpolated.point_glow_length = prevFrame.point_glow_length + prevFrame.applyCurve(t) * (nextFrame.point_glow_length - prevFrame.point_glow_length);
+            interpolated.r = prevFrame.r + prevFrame.applyCurve(t) * (nextFrame.r - prevFrame.r);
+            interpolated.phi = prevFrame.phi + prevFrame.applyCurve(t) * (nextFrame.phi - prevFrame.phi);
             break;
 
         case InterpolationType::Cubic:

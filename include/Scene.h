@@ -11,6 +11,7 @@ class Scene {
 public:
     Scene(std::string filename);
     void animate();
+    void set_debug_mode(bool mode);
 
 private:
     std::vector<Animator> animators;
@@ -23,6 +24,7 @@ private:
     int upscale_factor;
     Vector3f backgroundColor;
     std::string img_path;
+    bool debug_mode = false;
 };
 
 #endif // SCENE_H

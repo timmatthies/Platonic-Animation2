@@ -44,7 +44,7 @@ void ImageGenerator::drawPoints(const std::vector<Vector2f>& points, const std::
 }
 
 std::vector<Vector2i> ImageGenerator::getMask(const LineSet& lineSet) const {
-    std::vector<Vector2i> mask = lineSet.getMask(conversion_factor*7.0f);
+    std::vector<Vector2i> mask = lineSet.getMask(max_line_distance);
 
     return mask;
 }
@@ -61,7 +61,6 @@ void ImageGenerator::drawLines(const LineSet& lineSet, const float& decay_length
 }
 
 void ImageGenerator::drawPoint(const Vector2f& point, const float& glow_length) {
-    if(glow_length <= 0.001f) return;
     int ix = (int)point.x();
     int iy = (int)point.y();
     for (int dx = ix - max_radius; dx <= ix + max_radius; ++dx) {
@@ -71,6 +70,7 @@ void ImageGenerator::drawPoint(const Vector2f& point, const float& glow_length) 
             float squaredDistance = (dx - ix) * (dx - ix) + (dy - iy) * (dy - iy);
             float prev_mag = alpha[dy * width + dx];
             float new_mag = exp(-sqrt(squaredDistance)/glow_length/(conversion_factor));
+            if (new_mag < 1/255.0f) continue; // Skip very small contributions
             if (prev_mag>new_mag) {
                 // If the previous magnitude is greater, skip this pixel
                 continue;
@@ -111,5 +111,17 @@ void ImageGenerator::saveImage(const std::string& filename, const Vector3f& colo
         std::cerr << "Error saving image: " << result << std::endl;
         std::cerr << save_bmp_str_result(result) << std::endl;
         return;
+    }
+
+}
+
+void ImageGenerator::set_debug_mode(bool mode) {
+    debug_mode = mode;
+    if (debug_mode) {
+        max_radius = 1;
+        max_line_distance = 1.0f;
+    } else {
+        max_radius = 7*conversion_factor;
+        max_line_distance = 7.0f*conversion_factor;
     }
 }

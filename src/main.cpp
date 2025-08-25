@@ -14,11 +14,20 @@ std::string snprint_to_string(int data) {
   return buffer;
 }
 
-int main()
+int main(int argc, char** argv)
 {
     std::cout << "Platonic Animation Application" << std::endl;
 
-    Scene scene("first_scene");
+    std::string scene_name; // Default scene
+
+    if (argc > 1) {
+        scene_name = argv[1];
+    } else {
+        std::cerr << "No scene name provided." << std::endl;
+        return 1;
+    }
+
+    Scene scene(scene_name);
 
     scene.animate();
 

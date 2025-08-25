@@ -21,6 +21,7 @@ public:
         std::fill(alpha, alpha + width * height * 3, 0.0f);
     };
     float* get_alpha() {return alpha;}
+    void set_debug_mode(bool mode);
 
 
 private:
@@ -30,6 +31,8 @@ private:
     float gauss(float x, float y, float sigma);
     float conversion_factor = 1.0f;
     int max_radius = 7;
+    float max_line_distance = 7.0f;
+    bool debug_mode = false;
 };
 
 #endif // IMAGE_GENERATOR_H
