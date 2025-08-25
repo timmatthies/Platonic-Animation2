@@ -16,12 +16,13 @@ Scene::Scene(std::string path) {
         std::string line;
         // First lines give the screen height, the screen width, the fps, and the background color
         float bc_r, bc_g, bc_b;
-
+        int debug_mode_int = 0;
         // Skip first line
         std::getline(file, line);
-        if (file >> width >> height >> fps >> bc_r >> bc_g >> bc_b >> upscale_factor) {
+        if (file >> width >> height >> fps >> bc_r >> bc_g >> bc_b >> upscale_factor >> debug_mode_int) {
             // Create the camera, image generator, and object with the loaded parameters
             backgroundColor = Vector3f(bc_r, bc_g, bc_b);
+            debug_mode = (debug_mode_int != 0);
         }
         //Load the five animators (for each platonic solid)
         //Read the color and the file for the keyframes from "path/scene.txt"
@@ -43,6 +44,7 @@ Scene::Scene(std::string path) {
             }
         }
 
+        set_debug_mode(debug_mode);
         file.close();
     }else {
         std::cout << "No scene file found at " << path << "/scene.txt" << std::endl;
@@ -51,6 +53,7 @@ Scene::Scene(std::string path) {
         int width = 100;
         int fps = 10;
         int upscale_factor = 5;
+        int debug_mode_int = 0;
         Vector3f backgroundColor(0.1529f, 0.1373f, 0.1804f); // Default background color
         // If the file does not exist, create a default Animator and save it to filename
         Camera cam = Camera(width, height);
@@ -125,15 +128,23 @@ Scene::Scene(std::string path) {
         // Save the default scene to the specified filename
         std::ofstream outFile(path + "/scene.txt");
         if (outFile.is_open()) {
-            outFile << "Width Height FPS BackgroundColor UpscaleFactor\n";
+            outFile << "Width Height FPS BackgroundColor UpscaleFactor DebugMode\n";
             // Write the camera and image generator parameters
-            outFile << width << " " << height << " " << fps << " " << backgroundColor.x() << " " << backgroundColor.y() << " " << backgroundColor.z() << " " << upscale_factor << "\n";
+            outFile << width << " " << height << " " << fps << " " << backgroundColor.x() << " " << backgroundColor.y() << " " << backgroundColor.z() << " " << upscale_factor << " "<< debug_mode_int <<"\n";
             for (const auto& animator : animators) {
                 outFile << animator.get_color().x() << " " << animator.get_color().y() << " " << animator.get_color().z() << " " << animator.get_name() << " " << animator.get_name() << ".txt" << "\n";
                 animator.save_keyframes(path + "/keyframes/" + animator.get_name() + ".txt");
             }
             outFile.close();
         }
+    }
+}
+
+void Scene::set_debug_mode(bool mode) {
+    std::cout << "Setting debug mode to " << (mode ? "ON" : "OFF") << std::endl;
+    debug_mode = mode;
+    for (auto& animator : animators) {
+        animator.set_debug_mode(mode);
     }
 }
 
