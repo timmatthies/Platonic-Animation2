@@ -65,6 +65,7 @@ Keyframe Animator::get_keyframe(float time, InterpolationType type) const {
             interpolated.camera_shift_error = prevFrame.camera_shift_error + prevFrame.applyCurve(t) * (nextFrame.camera_shift_error - prevFrame.camera_shift_error);
             interpolated.camera_shear_error = prevFrame.camera_shear_error + prevFrame.applyCurve(t) * (nextFrame.camera_shear_error - prevFrame.camera_shear_error);
             interpolated.object_shift_error = prevFrame.object_shift_error + prevFrame.applyCurve(t) * (nextFrame.object_shift_error - prevFrame.object_shift_error);
+            interpolated.point_glow_length = prevFrame.point_glow_length + prevFrame.applyCurve(t) * (nextFrame.point_glow_length - prevFrame.point_glow_length);
             break;
 
         case InterpolationType::Cubic:
@@ -168,7 +169,7 @@ void Animator::save_keyframes(const std::string& filename) const {
     // Write header
     file << "# Keyframe data file\n";
 
-    file << "# time   t          length    decay_le  glow_len  pos_x     pos_y     pos_z     rot_x     rot_y     rot_z     scale_x   shift_e   screw_e   obj_sh_e  polar_r   polar_phi  curve \n";
+    file << "# time   t          length    decay_le  glow_len  glow_poi  pos_x     pos_y     pos_z     rot_x     rot_y     rot_z     scale_x   shift_e   screw_e   obj_sh_e  polar_r   polar_phi  curve \n";
     // file << keyframes.size() << "\n";
 
     // Write keyframes
@@ -179,6 +180,7 @@ void Animator::save_keyframes(const std::string& filename) const {
              << kf.length << "  "
              << kf.decay_length << "  "
              << kf.glow_length << "  "
+             << kf.point_glow_length << "  "
              << kf.object_position.x() << "  "
              << kf.object_position.y() << "  "
              << kf.object_position.z() << "  "
@@ -222,7 +224,7 @@ void Animator::load_keyframes(const std::string& filename) {
         std::string key_frame_curve;
 
         // Try to read all numeric fields first
-        if (!(ss >> kf.time >> kf.t >> kf.length >> kf.decay_length >> kf.glow_length
+        if (!(ss >> kf.time >> kf.t >> kf.length >> kf.decay_length >> kf.glow_length >> kf.point_glow_length
               >> kf.object_position.x() >> kf.object_position.y() >> kf.object_position.z()
               >> kf.object_rotation_axis.x() >> kf.object_rotation_axis.y() >> kf.object_rotation_axis.z()
               >> kf.object_scale >> kf.camera_shift_error >> kf.camera_shear_error >> kf.object_shift_error >> kf.r >> kf.phi)) {

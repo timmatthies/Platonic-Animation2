@@ -61,6 +61,7 @@ void ImageGenerator::drawLines(const LineSet& lineSet, const float& decay_length
 }
 
 void ImageGenerator::drawPoint(const Vector2f& point, const float& glow_length) {
+    if(glow_length <= 0.001f) return;
     int ix = (int)point.x();
     int iy = (int)point.y();
     for (int dx = ix - max_radius; dx <= ix + max_radius; ++dx) {
