@@ -8,16 +8,16 @@ ImageGenerator::ImageGenerator()
     : width(100), height(100) {
         conversion_factor = (width + height) / 2.0f/100.0f;
         max_radius = 7*conversion_factor;
-        alpha = new float[width * height * 3];
-        std::fill(alpha, alpha + width * height * 3, 0.0f);
+        alpha = new float[width * height];
+        std::fill(alpha, alpha + width * height, 0.0f);
     }
 
 ImageGenerator::ImageGenerator(int width, int height)
     : width(width), height(height) {
         conversion_factor = (width + height) / 2.0f/100.0f;
         max_radius = 7*conversion_factor;
-        alpha = new float[width * height * 3];
-        std::fill(alpha, alpha + width * height * 3, 0.0f);
+        alpha = new float[width * height];
+        std::fill(alpha, alpha + width * height, 0.0f);
     }
 
 void ImageGenerator::drawPoints(const std::vector<Vector2f>& points, const std::vector<float>& intensity) {
@@ -56,7 +56,10 @@ void ImageGenerator::drawLines(const LineSet& lineSet, const float& decay_length
         Vector2f point((float)mask[i].x(), (float)mask[i].y());
         float t = lineSet.get_t(point);
         float squaredDistance = lineSet.squaredDistance(point);
-        alpha[mask[i].y() * width + mask[i].x()] = exp(-sqrt(squaredDistance)/glow_length/(conversion_factor))*exp(-t/decay_length/conversion_factor*100.0f);
+        float new_alpha = exp(-sqrt(squaredDistance)/glow_length/(conversion_factor))*exp(-t/decay_length/conversion_factor*100.0f);
+        
+        // Take the maximum alpha value instead of accumulating to prevent overflow
+        alpha[mask[i].y() * width + mask[i].x()] = std::max(alpha[mask[i].y() * width + mask[i].x()], new_alpha);
     }
 }
 
@@ -95,11 +98,19 @@ void ImageGenerator::saveImage(const std::string& filename, const Vector3f& colo
     Vector3f avg_color = Vector3f(0.0f,0.0f,0.0f);
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            Vector3f c = color*alpha[y * width + x];
+            // Clamp alpha to prevent overflow
+            float clamped_alpha = std::min(1.0f, alpha[y * width + x]);
+            Vector3f c = color * clamped_alpha;
+            
+            // Clamp each color component to [0, 1] range
+            c.x() = std::max(0.0f, std::min(1.0f, c.x()));
+            c.y() = std::max(0.0f, std::min(1.0f, c.y()));
+            c.z() = std::max(0.0f, std::min(1.0f, c.z()));
+            
             avg_color += c;
-            bmpData[(y * width + x) * 3 + 0] = static_cast<uint8_t>(std::min(255.0f, c.x() * 255.0f));
-            bmpData[(y * width + x) * 3 + 1] = static_cast<uint8_t>(std::min(255.0f, c.y() * 255.0f));
-            bmpData[(y * width + x) * 3 + 2] = static_cast<uint8_t>(std::min(255.0f, c.z() * 255.0f));
+            bmpData[(y * width + x) * 3 + 0] = static_cast<uint8_t>(c.x() * 255.0f);
+            bmpData[(y * width + x) * 3 + 1] = static_cast<uint8_t>(c.y() * 255.0f);
+            bmpData[(y * width + x) * 3 + 2] = static_cast<uint8_t>(c.z() * 255.0f);
         }
     }
     avg_color = avg_color/(height*width);

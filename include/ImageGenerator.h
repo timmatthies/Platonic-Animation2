@@ -18,7 +18,7 @@ public:
     std::vector<Vector2i> getMask(const LineSet& lineSet) const;
     void normalize();
     void clear() {
-        std::fill(alpha, alpha + width * height * 3, 0.0f);
+        std::fill(alpha, alpha + width * height, 0.0f);
     };
     float* get_alpha() {return alpha;}
     void set_debug_mode(bool mode);

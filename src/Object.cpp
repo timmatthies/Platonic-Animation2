@@ -58,8 +58,16 @@ Object Object::getObjectByName(const std::string& name) {
     if (lower_case_name == "cube") {
         return getCube();
     } else if (lower_case_name == "square") {
-        return getSquare();
-    } else if (lower_case_name == "circle") {
+        return getPolygon(4, true);
+    }  else if (lower_case_name == "triangle") {
+        return getPolygon(3, true);
+    }  else if (lower_case_name == "pentagon") {
+        return getPolygon(5, true);
+    } else if (lower_case_name == "hexagon") {
+        return getPolygon(6, true);
+    }  else if (lower_case_name == "septagon") {
+        return getPolygon(7, true);
+    }  else if (lower_case_name == "circle") {
         return getCircle();
     } else if (lower_case_name == "thetra") {
         return getThetra();
@@ -122,6 +130,32 @@ Object Object::getSquare() {
     }
 
     return square;
+}
+
+Object Object::getPolygon(int n_sides, bool origin_lower) {
+    Object polygon;
+    float angle_step = 2 * M_PI / n_sides;
+    float phi = M_PI / n_sides - M_PI / 2.0f;
+    for (int i = 0; i < n_sides; ++i) {
+        float angle = i * angle_step + phi;
+        float x = std::cos(angle);
+        float y = -std::sin(angle);
+        polygon.points.push_back(Vector3f(x, y, 0.0f));
+    }
+    float side_length = (polygon.points[0] - polygon.points[1]).norm();
+    for (size_t i = 0; i < polygon.points.size(); i++)
+    {
+        polygon.points[i] = polygon.points[i]/side_length;
+    }
+    if (origin_lower) {
+        Vector3f m = (polygon.points[0] + polygon.points[n_sides-1]) / 2.0f;
+        for (size_t i = 0; i < polygon.points.size(); i++)
+        {
+            polygon.points[i] -= m;
+        }
+    }
+    
+    return polygon;
 }
 
 Vector3f Object::getPositionAtTime(float time) const {

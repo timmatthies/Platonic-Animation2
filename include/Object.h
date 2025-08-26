@@ -18,6 +18,7 @@ public:
     static Object getIco();
     static Object getDodeca();
     static Object getOcta();
+    static Object getPolygon(int n_sides, bool origin_lower);
     static Object getObjectByName(const std::string& name);
 
     Vector3f position;
