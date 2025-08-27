@@ -175,12 +175,138 @@ KeyframeSet::KeyframeSet(const std::string& filename) {
             
             if(token == "px"){
                 while (std::getline(file, line)) {
-                    std::cout << "Loading keyframe: " << line << std::endl;
                     if (line.empty()) break;
                     Keyframe keyframe = parse_keyframe(line);
                     object_position_x.push_back(keyframe);
-
-                    std::cout << "Loaded keyframeuiui: " << keyframe.start_time << " " << keyframe.start_val << " " << keyframe.end_time << " " << keyframe.end_val << std::endl;
+                }
+            }
+            if(token == "py"){
+                while (std::getline(file, line)) {
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    keyframe.end_val = -keyframe.end_val;
+                    if(!std::isnan(keyframe.start_val)){
+                        keyframe.start_val = -keyframe.start_val;
+                    }
+                    object_position_y.push_back(keyframe);
+                }
+            }
+            if(token == "pz"){
+                while (std::getline(file, line)) {
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    object_position_z.push_back(keyframe);
+                }
+            }
+            if(token == "rx"){
+                while (std::getline(file, line)) {
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    object_rotation_x.push_back(keyframe);
+                }
+            }
+            if(token == "ry"){
+                while (std::getline(file, line)) {
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    keyframe.end_val = -keyframe.end_val;
+                    if(!std::isnan(keyframe.start_val)){
+                        keyframe.start_val = -keyframe.start_val;
+                    }
+                    object_rotation_y.push_back(keyframe);
+                }
+            }
+            if(token == "rz"){
+                while (std::getline(file, line)) {
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    object_rotation_z.push_back(keyframe);
+                }
+            }
+            if(token == "t"){
+                while (std::getline(file, line)) {
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    t.push_back(keyframe);
+                }
+            }
+            if(token == "l"){
+                while (std::getline(file, line)) {
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    length.push_back(keyframe);
+                }
+            }
+            if(token == "dl"){
+                while (std::getline(file, line)) {
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    decay_length.push_back(keyframe);
+                }
+            }
+            if(token == "gl"){
+                while (std::getline(file, line)) {
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    glow_length.push_back(keyframe);
+                }
+            }
+            if(token == "pgl"){
+                while (std::getline(file, line)) {
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    point_glow_length.push_back(keyframe);
+                }
+            }
+            
+            
+            if(token == "ra"){
+                while (std::getline(file, line)){
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    object_rotation_angle.push_back(keyframe);
+                }
+            }
+            if(token == "s"){
+                while (std::getline(file, line)){
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    object_scale.push_back(keyframe);
+                }
+            }
+            if(token == "cse"){
+                while (std::getline(file, line)){
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    cam_shift_err.push_back(keyframe);
+                }
+            }
+            if(token == "ose"){
+                while (std::getline(file, line)){
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    obj_shift_err.push_back(keyframe);
+                }
+            }
+            if(token == "csh"){
+                while (std::getline(file, line)){
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    cam_shear_err.push_back(keyframe);
+                }
+            }
+            if(token == "r"){
+                while (std::getline(file, line)){
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    r.push_back(keyframe);
+                }
+            }
+            if(token == "phi"){
+                while (std::getline(file, line)){
+                    if (line.empty()) break;
+                    Keyframe keyframe = parse_keyframe(line);
+                    phi.push_back(keyframe);
                 }
             }
         }
@@ -203,11 +329,13 @@ Keyframe KeyframeSet::parse_keyframe(const std::string& line) {
 
     if (tokens.size() < 4) {
         std::cerr << "Error: Invalid keyframe line: " << line << std::endl;
+        std::cerr << "Maybe add a blank line." << std::endl;
         return Keyframe(0, 0, 0);
     }
 
     if(tokens.size() > 5){
         std::cerr << "Warning: Extra tokens in keyframe line: " << line << std::endl;
+        std::cerr << "Maybe add a blank line." << std::endl;
     }
     float start_time = 0.0f;
     float end_time = 0.0f;
@@ -216,29 +344,75 @@ Keyframe KeyframeSet::parse_keyframe(const std::string& line) {
     KeyframeCurve curve = KeyframeCurve::Linear; // Default to Linear
 
     if (tokens.size() == 5) {
-        start_time = std::stof(tokens[0]);
-        start_val = std::stof(tokens[1]);
-        end_time = std::stof(tokens[2]);
-        end_val = std::stof(tokens[3]);
+        start_time = convert_string_to_float(tokens[0]);
+        start_val = convert_string_to_float(tokens[1]);
+        end_time = convert_string_to_float(tokens[2]);
+        end_val = convert_string_to_float(tokens[3]);
         curve = string_to_curve(tokens[4]);
         Keyframe kf = Keyframe(start_time, end_time, start_val, end_val, curve);
-        std::cout << "Loaded keyframiiiiiie: " << kf.start_time << " " << kf.start_val << " " << kf.end_time << " " << kf.end_val << std::endl;
+        return kf;
 
     } else if (tokens.size() == 4) {
         if (std::isdigit(tokens[3][0]) || tokens[3][0] == '-') {
-            start_time = std::stof(tokens[0]);
-            start_val = std::stof(tokens[1]);
-            end_time = std::stof(tokens[2]);
-            end_val = std::stof(tokens[3]);
+            start_time = convert_string_to_float(tokens[0]);
+            start_val = convert_string_to_float(tokens[1]);
+            end_time = convert_string_to_float(tokens[2]);
+            end_val = convert_string_to_float(tokens[3]);
         } else {
-            start_time = std::stof(tokens[0]);
-            end_time = std::stof(tokens[1]);
-            end_val = std::stof(tokens[2]);
+            start_time = convert_string_to_float(tokens[0]);
+            end_time = convert_string_to_float(tokens[1]);
+            end_val = convert_string_to_float(tokens[2]);
             curve = string_to_curve(tokens[3]);
         }
     }
 
     return Keyframe(start_time, end_time, start_val, end_val, curve);
+}
+
+float KeyframeSet::convert_string_to_float(std::string str) {
+    // if there is "p" in the string replace it with the value of pi
+    size_t pos = str.find('p');
+    if (pos != std::string::npos) {
+        str.replace(pos, 1, std::to_string(M_PI));
+    }
+
+    // if there is a "+" in the string perform addition
+    pos = str.find('+');
+    if (pos != std::string::npos) {
+        float lhs = convert_string_to_float(str.substr(0, pos));
+        float rhs = convert_string_to_float(str.substr(pos + 1));
+        return lhs + rhs;
+    }
+    // if there is a "-" in the string perform subtraction
+    pos = str.find('-');
+    if (pos != std::string::npos) {
+        float lhs = convert_string_to_float(str.substr(0, pos));
+        float rhs = convert_string_to_float(str.substr(pos + 1));
+        return lhs - rhs;
+    }
+
+    // if there is a "*" in the string perform multiplication
+    pos = str.find('*');
+    if (pos != std::string::npos) {
+        float lhs = convert_string_to_float(str.substr(0, pos));
+        float rhs = convert_string_to_float(str.substr(pos + 1));
+        return lhs * rhs;
+    }
+
+    // if there is a "/" in the string perform division
+    pos = str.find('/');
+    if (pos != std::string::npos) {
+        float lhs = convert_string_to_float(str.substr(0, pos));
+        float rhs = convert_string_to_float(str.substr(pos + 1));
+        return lhs / rhs;
+    }
+
+    try {
+        return std::stof(str);
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Error: Invalid float value '" << str << "'" << std::endl;
+        return 0.0f; // Default value on error
+    }
 }
 
 KeyframeCurve KeyframeSet::string_to_curve(const std::string& curve_str) {
@@ -337,15 +511,10 @@ float KeyframeSet::get_value(std::vector<Keyframe>& keyframes, float time, float
     }
 
     //Check if the time is between two keyframes.
-    //If so linear interpolate
+    //If so take the end_value of the perv keyframe
     for (size_t i = 0; i < keyframes.size() - 1; ++i) {
         if (keyframes[i].end_time >= time && keyframes[i + 1].start_time <= time) {
-            float t = (time - keyframes[i].end_time) / (keyframes[i + 1].start_time - keyframes[i].end_time);
-            float start_val = keyframes[i+1].start_val;
-            if(std::isnan(start_val)){
-                return keyframes[i].end_val;
-            }
-            return keyframes[i].end_val + t * (start_val - keyframes[i].end_val);
+            return keyframes[i].end_val;
         }
     }
 
@@ -416,6 +585,6 @@ float KeyframeSet::get_vector_end_time(const std::vector<Keyframe>& keyframes) c
 }
 
 float KeyframeSet::get_vector_start_time(const std::vector<Keyframe>& keyframes) const {
-    if (keyframes.empty()) return 0.0f;
+    if (keyframes.empty()) return 100000.0f;
     return keyframes.front().start_time;
 }

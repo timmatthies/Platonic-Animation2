@@ -35,7 +35,7 @@ struct KeyframeSet{
     }
 
     float get_glow_length(float time) {
-        return get_value(glow_length, time, 1.0f);
+        return get_value(glow_length, time, 0.5f);
     }
 
     float get_point_glow_length(float time) {
@@ -94,5 +94,6 @@ struct KeyframeSet{
     float get_value(std::vector<Keyframe>& keyframes, float time, float default_val);
     KeyframeCurve string_to_curve(const std::string& str);
     Keyframe parse_keyframe(const std::string& line);
+    float convert_string_to_float(std::string str);
 };
 
