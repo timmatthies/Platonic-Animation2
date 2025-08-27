@@ -48,95 +48,9 @@ Scene::Scene(std::string path) {
         file.close();
     }else {
         std::cout << "No scene file found at " << path << "/scene.txt" << std::endl;
-        std::cout << "Creating default scene..." << std::endl;
-        int height = 100;
-        int width = 100;
-        int fps = 10;
-        int upscale_factor = 5;
-        int debug_mode_int = 0;
-        Vector3f backgroundColor(0.1529f, 0.1373f, 0.1804f); // Default background color
-        // If the file does not exist, create a default Animator and save it to filename
-        Camera cam = Camera(width, height);
-        ImageGenerator imgGen = ImageGenerator(width, height);
-        Animator ani = Animator("Cube", Vector3f(0.22f, 1.0f, 0.98f), cam, imgGen, Object::getCube(), fps);
-        Keyframe k;
-        k.time = 0.0f;
-        k.object_position = Vector3f(0.0f, 0.0f, 0.0f);
-        k.object_scale = 0.0f;
-        ani.add_keyframe(k);
-        k.time = 1.0f;
-        k.object_scale = 0.0f;
-        ani.add_keyframe(k);
-        animators.emplace_back(ani);
-        cam = Camera(width, height);
-        imgGen = ImageGenerator(width, height);
-        ani = Animator("Thetra", Vector3f(1.0f, 0.669f, 0.22f), cam, imgGen, Object::getCube(), fps);
-        k = Keyframe();
-        k.time = 0.0f;
-        k.object_position = Vector3f(0.0f, 0.0f, 0.0f);
-        k.object_scale = 0.0f;
-        ani.add_keyframe(k);
-        k.time = 1.0f;
-        k.object_position = Vector3f(1.0f, 1.0f, 0.0f);
-        k.object_scale = 0.0f;
-        ani.add_keyframe(k);
-        animators.emplace_back(ani);
-        cam = Camera(width, height);
-        imgGen = ImageGenerator(width, height);
-        ani = Animator("Octa", Vector3f(0.396f, 1.0f, 0.22f), cam, imgGen, Object::getCube(), fps);
-        k = Keyframe();
-        k.time = 0.0f;
-        k.object_position = Vector3f(0.0f, 0.0f, 0.0f);
-        k.object_scale = 0.0f;
-        ani.add_keyframe(k);
-        k.time = 1.0f;
-        k.object_position = Vector3f(-1.0f, 1.0f, 0.0f);
-        k.object_scale = 0.0f;
-        ani.add_keyframe(k);
-        animators.emplace_back(ani);
-        cam = Camera(width, height);
-        imgGen = ImageGenerator(width, height);
-        ani = Animator("Ico", Vector3f(0.356f, 0.22f, 1.0f), cam, imgGen, Object::getCube(), fps);
-        k = Keyframe();
-        k.time = 0.0f;
-        k.object_position = Vector3f(0.0f, 0.0f, 0.0f);
-        k.object_scale = 0.0f;
-        ani.add_keyframe(k);
-        k.time = 1.0f;
-        k.object_position = Vector3f(-1.0f, -1.0f, 0.0f);
-        k.object_scale = 0.0f;
-        ani.add_keyframe(k);
-        animators.emplace_back(ani);
-        cam = Camera(width, height);
-        imgGen = ImageGenerator(width, height);
-        ani = Animator("Dodeca", Vector3f(1.0f, 0.22f, 0.708f), cam, imgGen, Object::getCube(), fps);
-        k = Keyframe();
-        k.time = 0.0f;
-        k.object_position = Vector3f(0.0f, 0.0f, 0.0f);
-        k.object_scale = 0.0f;
-        ani.add_keyframe(k);
-        k.time = 1.0f;
-        k.object_position = Vector3f(1.0f, -1.0f, 0.0f);
-        k.object_scale = 0.0f;
-        ani.add_keyframe(k);
-        animators.emplace_back(ani);
-
-        std::filesystem::create_directory(path);
-        std::filesystem::create_directory(path + "/keyframes");
-        std::filesystem::create_directory(path + "/imgs");
-        img_path = path + "/imgs";
-        // Save the default scene to the specified filename
-        std::ofstream outFile(path + "/scene.txt");
-        if (outFile.is_open()) {
-            outFile << "Width Height FPS BackgroundColor UpscaleFactor DebugMode\n";
-            // Write the camera and image generator parameters
-            outFile << width << " " << height << " " << fps << " " << backgroundColor.x() << " " << backgroundColor.y() << " " << backgroundColor.z() << " " << upscale_factor << " "<< debug_mode_int <<"\n";
-            for (const auto& animator : animators) {
-                outFile << animator.get_color().x() << " " << animator.get_color().y() << " " << animator.get_color().z() << " " << animator.get_name() << " " << animator.get_name() << ".txt" << "\n";
-                animator.save_keyframes(path + "/keyframes/" + animator.get_name() + ".txt");
-            }
-            outFile.close();
-        }
+        std::cout << "Please create a scene.txt file with the following format:" << std::endl;
+        std::cout << "width height fps background_color_r background_color_g background_color_b upscale_factor debug_mode" << std::endl;
+        std::cout << "color_r color_g color_b object_name keyframe_file" << std::endl;
     }
 }
 
@@ -152,6 +66,7 @@ void Scene::animate() {
     float start_time = get_animation_start_time();
     float end_time = get_animation_end_time();
     float duration = end_time - start_time;
+    std::cout << start_time << " " << end_time << " " << duration << std::endl;
 
     int num_frames = static_cast<int>(duration * fps);
 
@@ -267,14 +182,12 @@ float Scene::get_animation_start_time() const {
         return 0.0f;
     }
 
-    //Check that all animators have the same start time
+    //Find minimum start time
     float startTime = animators.front().get_start_time();
     for (const auto& animator : animators) {
-        if (animator.get_start_time() != startTime) {
-            std::cerr << "Inconsistent start times found." << std::endl;
-            return 0.0f;
-        }
+        startTime = std::min(startTime, animator.get_start_time());
     }
+
     return startTime;
 }
 
@@ -284,13 +197,11 @@ float Scene::get_animation_end_time() const {
         return 0.0f;
     }
 
-    // Check that all animators have the same end time
+    // Find maximum end time
     float endTime = animators.front().get_end_time();
     for (const auto& animator : animators) {
-        if (animator.get_end_time() != endTime) {
-            std::cerr << "Inconsistent end times found." << std::endl;
-            return 0.0f;
-        }
+        endTime = std::max(endTime, animator.get_end_time());
     }
+
     return endTime;
 }

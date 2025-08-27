@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(PlatonicAnimation)
+project(PlatonicAnimation3)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,8 +18,9 @@ set(SOURCES
     src/Line.cpp
     src/LineSet.cpp
     src/Animator.cpp
-    src/Keyframe.cpp
+    src/KeyframeCollection.cpp
     src/Scene.cpp
+    src/KeyframeSet.cpp
 )
 
 if(NOT CMAKE_BUILD_TYPE)
