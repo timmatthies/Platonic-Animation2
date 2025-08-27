@@ -4,7 +4,8 @@
 #include "Camera.h"
 #include <random>
 #include "ImageGenerator.h"
-#include "Keyframe.h"
+#include "KeyframeCollection.h"
+#include "KeyframeSet.h"
 
 class Animator
 {
@@ -15,19 +16,17 @@ private:
     ImageGenerator imageGenerator;
     Object object;
     int fps;
-    std::vector<Keyframe> keyframes;
+    
+    KeyframeSet keyframeSet;
     std::mt19937 gen;
     std::normal_distribution<float> dist;
     bool debug_mode = false;
 public:
     Animator();
     Animator(std::string name, Vector3f color,Camera cam, ImageGenerator imgGen, Object object, int fps);
-    Keyframe get_keyframe(float time, InterpolationType type) const;
-    void animate(const std::string& filename) const; //Saves the entire animation as images (bmp)
+    // void animate(const std::string& filename) const; //Saves the entire animation as images (bmp)
     void render_frame(float time);
-    void save_keyframes(const std::string& filename) const; //Saves the keyframes in a txt file
     void load_keyframes(const std::string& filename);
-    void add_keyframe(const Keyframe& keyframe);
     Vector3f get_color() const;
     std::string get_name() const;
     float get_start_time() const;
