@@ -1,0 +1,7 @@
+Width Height FPS BackgroundColor UpscaleFac DebugMode
+100 100 10 0.1529 0.1373 0.1804 8 1
+0.396 1 0.22 Cube Cube.txt
+1 0.22 0.708 Thetra Thetra.txt
+0.22 1 0.98 Circle Octa.txt
+0.356 0.22 1 Circle Ico.txt
+1 0.669 0.22 Circle Dodeca.txt
