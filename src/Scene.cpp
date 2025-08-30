@@ -68,7 +68,7 @@ void Scene::animate() {
     float duration = end_time - start_time;
     std::cout << start_time << " " << end_time << " " << duration << std::endl;
 
-    int num_frames = static_cast<int>(duration * fps)+1;
+    int num_frames = static_cast<int>(duration * fps)+2;
 
     if (num_frames <= 0) {
         std::cerr << "Invalid number of frames!" << std::endl;
@@ -95,7 +95,7 @@ void Scene::animate() {
 
         // Add the current frame to the screen
         for (size_t k = 0; k < animators.size(); k++) {
-            float* a = animators[k].get_alpha();
+            std::vector<float> a = animators[k].get_alpha();
             #pragma omp parallel for
             for (int l = 0; l < width * height; l++){
                 alpha[l] += a[l];
@@ -106,6 +106,7 @@ void Scene::animate() {
         for (int m = 0; m < width * height; m++)
         {
             alpha[m] = std::min(1.0f, alpha[m]);
+            if (screen[m].norm() == 0.0f) screen[m] = backgroundColor;
             screen[m] = alpha[m] * screen[m] / screen[m].norm() + (1 - alpha[m]) * backgroundColor;
             if (alpha[m] <= 0.0f) {
                 screen[m] = backgroundColor;
@@ -135,39 +136,53 @@ void Scene::animate() {
 }
 
 void Scene::save_image(const int& frame_number, const std::vector<Vector3f>& screen) const {
-    std::vector<uint8_t> bmpData(width * height * 3 * upscale_factor * upscale_factor);
-    // normalize(); // Normalize the image data before saving
-
-    if (upscale_factor == 1){
+    // Calculate the upscaled dimensions safely
+    size_t upscaled_width = static_cast<size_t>(width) * upscale_factor;
+    size_t upscaled_height = static_cast<size_t>(height) * upscale_factor;
+    
+    // Use size_t for safety with large allocations
+    std::vector<uint8_t> bmpData(upscaled_width * upscaled_height * 3);
+    
+    if (upscale_factor == 1) {
         #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 Vector3f c = screen[y * width + x];
-                bmpData[(y * width + x) * 3 + 0] = static_cast<uint8_t>(std::min(255.0f, c.x() * 255.0f));
-                bmpData[(y * width + x) * 3 + 1] = static_cast<uint8_t>(std::min(255.0f, c.y() * 255.0f));
-                bmpData[(y * width + x) * 3 + 2] = static_cast<uint8_t>(std::min(255.0f, c.z() * 255.0f));
+                size_t idx = (y * width + x) * 3;
+                // Bounds check
+                if (idx + 2 < bmpData.size()) {
+                    bmpData[idx + 0] = static_cast<uint8_t>(std::min(255.0f, c.x() * 255.0f));
+                    bmpData[idx + 1] = static_cast<uint8_t>(std::min(255.0f, c.y() * 255.0f));
+                    bmpData[idx + 2] = static_cast<uint8_t>(std::min(255.0f, c.z() * 255.0f));
+                }
             }
         }
-    }else{
+    } else {
         #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 Vector3f c = screen[y * width + x];
                 for (int dy = 0; dy < upscale_factor; ++dy) {
                     for (int dx = 0; dx < upscale_factor; ++dx) {
-                        int upscaled_x = x * upscale_factor + dx;
-                        int upscaled_y = y * upscale_factor + dy;
-                        bmpData[(upscaled_y * width * upscale_factor + upscaled_x) * 3 + 0] = static_cast<uint8_t>(std::min(255.0f, c.x() * 255.0f));
-                        bmpData[(upscaled_y * width * upscale_factor + upscaled_x) * 3 + 1] = static_cast<uint8_t>(std::min(255.0f, c.y() * 255.0f));
-                        bmpData[(upscaled_y * width * upscale_factor + upscaled_x) * 3 + 2] = static_cast<uint8_t>(std::min(255.0f, c.z() * 255.0f));
+                        size_t upscaled_x = static_cast<size_t>(x) * upscale_factor + dx;
+                        size_t upscaled_y = static_cast<size_t>(y) * upscale_factor + dy;
+                        size_t idx = (upscaled_y * upscaled_width + upscaled_x) * 3;
+                        
+                        // Add bounds check
+                        if (idx + 2 < bmpData.size()) {
+                            bmpData[idx + 0] = static_cast<uint8_t>(std::min(255.0f, c.x() * 255.0f));
+                            bmpData[idx + 1] = static_cast<uint8_t>(std::min(255.0f, c.y() * 255.0f));
+                            bmpData[idx + 2] = static_cast<uint8_t>(std::min(255.0f, c.z() * 255.0f));
+                        }
                     }
                 }
             }
         }
     }
+    
     std::stringstream ss;
     ss << img_path << "/frame_" << std::setfill('0') << std::setw(5) << frame_number << ".bmp";
-    enum save_bmp_result result = save_bmp(ss.str().c_str(), width * upscale_factor, height * upscale_factor, bmpData.data());
+    enum save_bmp_result result = save_bmp(ss.str().c_str(), upscaled_width, upscaled_height, bmpData.data());
     // Check the result of saving the BMP file
     if (result != SAVE_BMP_SUCCESS) {
         std::cerr << "!!!Error saving image: " << result << std::endl;

@@ -8,16 +8,16 @@ ImageGenerator::ImageGenerator()
     : width(100), height(100) {
         conversion_factor = (width + height) / 2.0f/100.0f;
         max_radius = 7*conversion_factor;
-        alpha = new float[width * height];
-        std::fill(alpha, alpha + width * height, 0.0f);
+        alpha.resize(width * height);
+        std::fill(alpha.begin(), alpha.end(), 0.0f);
     }
 
 ImageGenerator::ImageGenerator(int width, int height)
     : width(width), height(height) {
         conversion_factor = (width + height) / 2.0f/100.0f;
         max_radius = 7*conversion_factor;
-        alpha = new float[width * height];
-        std::fill(alpha, alpha + width * height, 0.0f);
+        alpha.resize(width * height);
+        std::fill(alpha.begin(), alpha.end(), 0.0f);
     }
 
 void ImageGenerator::drawPoints(const std::vector<Vector2f>& points, const std::vector<float>& intensity) {
@@ -51,19 +51,23 @@ std::vector<Vector2i> ImageGenerator::getMask(const LineSet& lineSet) const {
 
 void ImageGenerator::drawLines(const LineSet& lineSet, const float& decay_length, const float& glow_length) {
     std::vector<Vector2i> mask = getMask(lineSet);
+    
     #pragma omp parallel for
     for (size_t i = 0; i < mask.size(); ++i) {
         Vector2f point((float)mask[i].x(), (float)mask[i].y());
-        float t = lineSet.get_t(point);
-        float squaredDistance = lineSet.squaredDistance(point);
-        float new_alpha = exp(-sqrt(squaredDistance)/glow_length/(conversion_factor))*exp(-t/decay_length/conversion_factor*100.0f);
-        
-        // Take the maximum alpha value instead of accumulating to prevent overflow
-        alpha[mask[i].y() * width + mask[i].x()] = std::max(alpha[mask[i].y() * width + mask[i].x()], new_alpha);
+        // Add bounds check here
+        if (mask[i].x() >= 0 && mask[i].x() < width && mask[i].y() >= 0 && mask[i].y() < height) {
+            float t = lineSet.get_t(point);
+            float squaredDistance = lineSet.squaredDistance(point);
+            float new_alpha = exp(-sqrt(squaredDistance)/glow_length/(conversion_factor))*exp(-t/decay_length/conversion_factor*100.0f);
+            
+            alpha[mask[i].y() * width + mask[i].x()] = std::max(alpha[mask[i].y() * width + mask[i].x()], new_alpha);
+        }
     }
 }
 
 void ImageGenerator::drawPoint(const Vector2f& point, const float& glow_length) {
+    if(glow_length <= 0.00001f) return;
     int ix = (int)point.x();
     int iy = (int)point.y();
     for (int dx = ix - max_radius; dx <= ix + max_radius; ++dx) {

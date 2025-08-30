@@ -19,9 +19,8 @@ public:
     float squaredDistance(const Vector2f& point) const;
     std::vector<Vector2i> getMask(float size) const;
     Vector2f getStartPoint() const;
-
-private:
     std::vector<Line> lines;
+
 };
 
 #endif // LINESET_H

@@ -48,9 +48,19 @@ float LineSet::squaredDistance(const Vector2f& point) const {
 
 std::vector<Vector2i> LineSet::getMask(float size) const {
     std::vector<Vector2i> mask;
-    Vector2f v1, v2, v3, v4, v5, v6;
+    if (lines.empty()) return mask; // Prevent crash if no lines
+
+    // First create the outline mask as before
+    Vector2f v1, v2, v3, v4;
     v1 = lines[0].startPoint+lines[0].normal*size/2;
     v2 = lines[0].startPoint-lines[0].normal*size/2;
+    
+    // Track all the outline points for later filling
+    std::vector<Vector2f> outlinePoints;
+    outlinePoints.push_back(v1);
+    outlinePoints.push_back(v2);
+    
+    // Generate mask as before
     for (size_t i = 0; i < lines.size(); i++) {
         if(i != lines.size() - 1) {
             v3 = (lines[i].endPoint+lines[i].normal*size/2+lines[i+1].startPoint+lines[i+1].normal*size/2)/2;
@@ -59,12 +69,28 @@ std::vector<Vector2i> LineSet::getMask(float size) const {
             v3 = lines[i].endPoint+lines[i].normal*size/2;
             v4 = lines[i].endPoint-lines[i].normal*size/2;
         }
-        // Now fill the rectangle inclosed by v1, v2, v3, and v4
-        for (int x = (int)std::min({v1.x(), v2.x(), v3.x(), v4.x()}); x <= (int)std::max({v1.x(), v2.x(), v3.x(), v4.x()}); ++x) {
-            for (int y = (int)std::min({v1.y(), v2.y(), v3.y(), v4.y()}); y <= (int)std::max({v1.y(), v2.y(), v3.y(), v4.y()}); ++y) {
+        
+        // Add outline points
+        outlinePoints.push_back(v3);
+        outlinePoints.push_back(v4);
+        
+        // Fill the rectangle as before
+        int min_x = std::floor(std::min({v1.x(), v2.x(), v3.x(), v4.x()}));
+        int max_x = std::ceil(std::max({v1.x(), v2.x(), v3.x(), v4.x()}));
+        int min_y = std::floor(std::min({v1.y(), v2.y(), v3.y(), v4.y()}));
+        int max_y = std::ceil(std::max({v1.y(), v2.y(), v3.y(), v4.y()}));
+        
+        // Limit rectangle size to prevent excessive memory usage
+        const int MAX_SIZE = 1000;
+        if (max_x - min_x > MAX_SIZE) max_x = min_x + MAX_SIZE;
+        if (max_y - min_y > MAX_SIZE) max_y = min_y + MAX_SIZE;
+        
+        for (int x = min_x; x <= max_x; ++x) {
+            for (int y = min_y; y <= max_y; ++y) {
                 mask.push_back(Vector2i(x, y));
             }
         }
+        
         v1 = v3;
         v2 = v4;
     }

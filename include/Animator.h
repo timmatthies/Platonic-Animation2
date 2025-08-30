@@ -32,7 +32,7 @@ public:
     float get_start_time() const;
     float get_end_time() const;
     void clear();
-    float* get_alpha() {
+    std::vector<float> get_alpha() {
         return imageGenerator.get_alpha();
     }
     void set_debug_mode(bool mode);
