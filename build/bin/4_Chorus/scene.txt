@@ -1,0 +1,7 @@
+Width Height FPS BackgroundColor UpscaleFac DebugMode
+200 200 10 0.1529 0.1373 0.1804 1 0
+0.396 1 0.22 Square Cube.txt
+1 0.22 0.708 Triangle Thetra.txt
+0.22 1 0.98 Hexagon Octa.txt
+0.356 0.22 1 Septagon Ico.txt
+1 0.669 0.22 Pentagon Dodeca.txt
