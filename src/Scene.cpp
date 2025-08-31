@@ -68,7 +68,7 @@ void Scene::animate() {
     float duration = end_time - start_time;
     std::cout << start_time << " " << end_time << " " << duration << std::endl;
 
-    int num_frames = static_cast<int>(duration * fps)+2;
+    int num_frames = static_cast<int>(duration * fps);
 
     if (num_frames <= 0) {
         std::cerr << "Invalid number of frames!" << std::endl;
