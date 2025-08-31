@@ -1,3 +1,0 @@
-Width Height FPS BackgroundColor UpscaleFactor DebugMode
-100 100 10 0.1529 0.1373 0.1804 5 0
-1 1 1 Cube Cube.txt
