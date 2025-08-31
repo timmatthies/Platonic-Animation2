@@ -16,12 +16,14 @@ done
 input_files=()
 for dir in "$BASE_DIR"/*/; do
     # Use full paths everywhere
-    mp4_file="${dir}imgs/animation_output.mp4"
+    mp4_file="${dir}imgs/animation_output"
     if [ -f "$mp4_file" ]; then
         # Store absolute paths to avoid temporary directory issues
         input_files+=("$(realpath "$mp4_file")")
     fi
 done
+
+~/Platonic-Animation2/build/bin/combined_animation.mp4
 
 # Create a temporary file list for ffmpeg in the current directory
 file_list="$BASE_DIR/temp_file_list.txt"
