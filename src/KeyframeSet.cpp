@@ -513,7 +513,7 @@ float KeyframeSet::get_value(std::vector<Keyframe>& keyframes, float time, float
     //Check if the time is between two keyframes.
     //If so take the end_value of the perv keyframe
     for (size_t i = 0; i < keyframes.size() - 1; ++i) {
-        if (keyframes[i].end_time >= time && keyframes[i + 1].start_time <= time) {
+        if (keyframes[i].end_time < time && time < keyframes[i + 1].start_time) {
             return keyframes[i].end_val;
         }
     }

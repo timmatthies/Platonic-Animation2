@@ -256,12 +256,12 @@ Object Object::getOcta() {
     // Octahedron vertices
     obj.points.clear();
     std::vector<Vector3f> p = {
-        Vector3f( 0.5f*a, 0.5f*a, 0), //A
-        Vector3f(-0.5f*a, 0.5f*a, 0), //B
-        Vector3f(-0.5f*a,  -0.5f*a, 0), //C
-        Vector3f(0.5f*a, -0.5f*a, 0), //D
-        Vector3f(0, 0,  std::sqrt(0.5f)*a), //E
-        Vector3f(0, 0, -std::sqrt(0.5f)*a), //F
+        Vector3f( 0.5f*a, 0.0f, 0.5f*a), //A
+        Vector3f(-0.5f*a, 0.0f, 0.5f*a), //B
+        Vector3f(-0.5f*a,  0.0f, -0.5f*a), //C
+        Vector3f(0.5f*a, 0.0f, -0.5f*a), //D
+        Vector3f(0.0f, std::sqrt(0.5f)*a, 0.0f), //E
+        Vector3f(0.0f, -std::sqrt(0.5f)*a, 0.0f), //F
     };
     //ABCDECFD
     obj.points = {
