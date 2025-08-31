@@ -1,28 +1,33 @@
 #!/bin/bash
 
-# Set the base directory to the location of this script
-BASE_DIR="$(dirname "$0")"
+# Set the base directory to the location of this script - use absolute path
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Iterate over all subdirectories in the base directory
 for dir in "$BASE_DIR"/*/; do
     # Remove trailing slash and get folder name
     folder_name=$(basename "$dir")
     
-    # Execute PlatonicAnimation3.exe with the folder name
-    PlatonicAnimation3.exe "$folder_name"
+    # Execute PlatonicAnimation3.exe with the folder name - use full path
+    "$BASE_DIR/PlatonicAnimation3.exe" "$folder_name"
 done
 
 # Create a list of all animation_output.mp4 files
 input_files=()
 for dir in "$BASE_DIR"/*/; do
+    # Use full paths everywhere
     mp4_file="${dir}imgs/animation_output.mp4"
     if [ -f "$mp4_file" ]; then
-        input_files+=("$mp4_file")
+        # Store absolute paths to avoid temporary directory issues
+        input_files+=("$(realpath "$mp4_file")")
     fi
 done
 
-# Create a temporary file list for ffmpeg
-file_list=$(mktemp)
+# Create a temporary file list for ffmpeg in the current directory
+file_list="$BASE_DIR/temp_file_list.txt"
+# Clear the file if it exists
+> "$file_list"
+# Add each file to the list
 for f in "${input_files[@]}"; do
     echo "file '$f'" >> "$file_list"
 done
