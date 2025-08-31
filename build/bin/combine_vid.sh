@@ -9,7 +9,7 @@ for dir in "$BASE_DIR"/*/; do
     folder_name=$(basename "$dir")
     
     # Execute PlatonicAnimation3.exe with the folder name - use full path
-    "$BASE_DIR/PlatonicAnimation3.exe" "$folder_name"
+    "$BASE_DIR/PlatonicAnimation3" "$folder_name"
 done
 
 # Create a list of all animation_output.mp4 files
