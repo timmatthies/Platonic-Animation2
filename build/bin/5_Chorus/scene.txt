@@ -1,5 +1,5 @@
 Width Height FPS BackgroundColor UpscaleFac DebugMode
-1000 1000 30 0.1529 0.1373 0.1804 1 0
+1080 1080 60 0.1529 0.1373 0.1804 1 0
 0.396 1 0.22 Cube Cube.txt
 1 0.22 0.708 Thetra Thetra.txt
 0.22 1 0.98 Triangle Octa.txt
