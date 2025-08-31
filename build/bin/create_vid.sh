@@ -3,6 +3,18 @@
 # Set the base directory to the location of this script - use absolute path
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Set the base directory to the location of this script - use absolute path
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Iterate over all subdirectories in the base directory
+for dir in "$BASE_DIR"/*/; do
+    # Remove trailing slash and get folder name
+    folder_name=$(basename "$dir")
+    
+    # Execute PlatonicAnimation3.exe with the folder name - use full path
+    "$BASE_DIR/PlatonicAnimation3" "$folder_name"
+done
+
 # Create a list of all animation_output.mp4 files
 input_files=()
 for dir in "$BASE_DIR"/*/; do
