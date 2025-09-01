@@ -17,7 +17,7 @@ private:
     std::vector<Animator> animators;
     float get_animation_start_time() const;
     float get_animation_end_time() const;
-    void save_image(const int& frame_number, const std::vector<Vector3f>& screen) const;
+    void save_image(const int& frame_number, const std::vector<Vector3f>& screen);
     int fps;
     int width;
     int height;
@@ -25,6 +25,8 @@ private:
     Vector3f backgroundColor;
     std::string img_path;
     bool debug_mode = false;
+    uint32_t random_seed = 42;
+
 };
 
 #endif // SCENE_H

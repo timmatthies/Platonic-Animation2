@@ -5,6 +5,7 @@
 #include <iostream>
 #include "save_bmp.h"
 
+
 Scene::Scene(std::string path) {
     // See if there is a file called "path/scene.txt"
     std::ifstream file(path + "/scene.txt");
@@ -144,7 +145,18 @@ void Scene::animate() {
     system(ss.str().c_str());
 }
 
-void Scene::save_image(const int& frame_number, const std::vector<Vector3f>& screen) const {
+// Wang Hash function for generating pseudo-random numbers
+inline uint32_t wang_hash(uint32_t seed) {
+    seed = (seed ^ 61) ^ (seed >> 16);
+    seed = seed + (seed << 3);
+    seed = seed ^ (seed >> 4);
+    seed = seed * 0x27d4eb2d;
+    seed = seed ^ (seed >> 15);
+    return seed;
+}
+
+
+void Scene::save_image(const int& frame_number, const std::vector<Vector3f>& screen) {
     // Calculate the upscaled dimensions safely
     size_t upscaled_width = static_cast<size_t>(width) * upscale_factor;
     size_t upscaled_height = static_cast<size_t>(height) * upscale_factor;
@@ -153,11 +165,17 @@ void Scene::save_image(const int& frame_number, const std::vector<Vector3f>& scr
     std::vector<uint8_t> bmpData(upscaled_width * upscaled_height * 3);
     
     if (upscale_factor == 1) {
+        random_seed = wang_hash(random_seed);
         #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
+                Vector3f rand_c = Vector3f(
+                    static_cast<float>(wang_hash(random_seed + y * width + x) % 1000) / 1000.0f,
+                    static_cast<float>(wang_hash(random_seed + y * width + x + 1) % 1000) / 1000.0f,
+                    static_cast<float>(wang_hash(random_seed + y * width + x + 2) % 1000) / 1000.0f
+                );
                 // Apply color noise
-                Vector3f c = screen[y * width + x] + Vector3f::Random() * 0.01f;
+                Vector3f c = screen[y * width + x]+ 0.01f*(rand_c-Vector3f(0.5f,0.5f,0.5f));
                 size_t idx = (y * width + x) * 3;
                 // Bounds check
                 if (idx + 2 < bmpData.size()) {
