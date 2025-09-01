@@ -145,16 +145,6 @@ void Scene::animate() {
     system(ss.str().c_str());
 }
 
-// Wang Hash function for generating pseudo-random numbers
-inline uint32_t wang_hash(uint32_t seed) {
-    seed = (seed ^ 61) ^ (seed >> 16);
-    seed = seed + (seed << 3);
-    seed = seed ^ (seed >> 4);
-    seed = seed * 0x27d4eb2d;
-    seed = seed ^ (seed >> 15);
-    return seed;
-}
-
 
 void Scene::save_image(const int& frame_number, const std::vector<Vector3f>& screen) {
     // Calculate the upscaled dimensions safely
@@ -169,6 +159,7 @@ void Scene::save_image(const int& frame_number, const std::vector<Vector3f>& scr
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
 
+                Vector3f c = screen[y * width + x];
                 size_t idx = (y * width + x) * 3;
                 // Bounds check
                 if (idx + 2 < bmpData.size()) {
