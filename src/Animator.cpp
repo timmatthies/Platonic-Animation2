@@ -165,7 +165,8 @@ void Animator::load_keyframes(const std::string& filename) {
 }
 
 Vector3f Animator::get_color() const {
-    return color;
+    // Add minimal noise to color
+    return color + Vector3f::Random() * 0.01f;
 }
 
 std::string Animator::get_name() const {

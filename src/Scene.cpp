@@ -156,7 +156,8 @@ void Scene::save_image(const int& frame_number, const std::vector<Vector3f>& scr
         #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
-                Vector3f c = screen[y * width + x];
+                // Apply color noise
+                Vector3f c = screen[y * width + x] + Vector3f::Random() * 0.01f;
                 size_t idx = (y * width + x) * 3;
                 // Bounds check
                 if (idx + 2 < bmpData.size()) {

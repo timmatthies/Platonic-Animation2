@@ -26,6 +26,9 @@ for dir in "$BASE_DIR"/*/; do
     fi
 done
 
+# Zip all animation_output.mp4 files
+zip -r "$BASE_DIR/animation_outputs.zip" "$BASE_DIR"/*/imgs/animation_output.mp4
+
 # Create a temporary file list for ffmpeg in the current directory
 file_list="$BASE_DIR/temp_file_list.txt"
 # Clear the file if it exists

@@ -211,9 +211,18 @@ Object Object::getIco() {
         Vector3f( phi, 0, -1), Vector3f( phi, 0, 1), Vector3f(-phi, 0, -1), Vector3f(-phi, 0, 1)
     };
     obj.points.clear();
+    Matrix3f swap_zy;
+    swap_zy << 0, -1, 0,
+                1, 0, 0,
+                0, 0, 1;
+
     for (size_t i = 0; i < p.size(); i++)
     {
-        p[i] = p[i].normalized();
+        p[i] =   p[i].normalized();
+        float temp_x = p[i].x();
+        float temp_y = p[i].y();
+        float temp_z = p[i].z();
+        p[i] = Vector3f(temp_y, temp_x, temp_z);
     }
     // ABHAKHGKCGHIGCDGIBJIDJEDCEFJBFAFLECLAKL
     std::string path_code = "ABHAKHGKCGHIGCDGIBJIDJEDCEFJBFAFLECLAKL";
@@ -221,6 +230,8 @@ Object Object::getIco() {
     {
         obj.points.push_back(p[path_code[i] - 'A']);
     }
+
+
     return obj;
 }
 

@@ -120,10 +120,12 @@ Vector2f Camera::get_point(float t, const Object &object) const
 
 void Camera::set_error(float shear, float x_err, float y_err, float x_offset, float y_offset)
 {
-    shear_error = shear;
-    x_scale_error = x_err;
-    y_scale_error = y_err;
-    x_offset_error = x_offset;
-    y_offset_error = y_offset;
+    Vector2f rand_error = Vector2f::Random() * 0.001f;
+    Vector3f rand_shear = Vector3f::Random() * 0.001f;
+    shear_error = shear + rand_shear.x();
+    x_scale_error = x_err + rand_shear.y();
+    y_scale_error = y_err + rand_shear.z();
+    x_offset_error = x_offset + rand_error.x();
+    y_offset_error = y_offset + rand_error.y();
 
 }
