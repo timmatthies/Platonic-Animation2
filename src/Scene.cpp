@@ -94,49 +94,29 @@ void Scene::animate() {
         }
 
         // Add the current frame to the screen
-        std::vector<float> max_alpha_per_animator(width * height * animators.size(), 0.0f);
-        std::vector<int> best_animator(width * height, -1); // Track which animator has highest alpha for each pixel
+        std::vector<float> total_alpha(width * height, 0.0f);
+        std::vector<Vector3f> color_sum(width * height, Vector3f(0.0f, 0.0f, 0.0f));
 
-        // First pass: find which animator has the strongest contribution for each pixel
+        // First pass: collect all contributions and calculate total alpha
         for (size_t k = 0; k < animators.size(); k++) {
             std::vector<float> a = animators[k].get_alpha();
             #pragma omp parallel for
             for (int l = 0; l < width * height; l++) {
-                max_alpha_per_animator[l * animators.size() + k] = a[l];
-                if (a[l] > 0.0f && (best_animator[l] == -1 || a[l] > max_alpha_per_animator[l * animators.size() + best_animator[l]])) {
-                    best_animator[l] = k;
-                }
+                total_alpha[l] += a[l];
+                color_sum[l] += animators[k].get_color() * a[l];
             }
         }
 
-        // Second pass: only blend colors from animators that are close to the maximum alpha
+        // Second pass: normalize and blend with background
         #pragma omp parallel for
         for (int m = 0; m < width * height; m++) {
-            if (best_animator[m] >= 0) {
-                float best_alpha = max_alpha_per_animator[m * animators.size() + best_animator[m]];
-                float threshold = best_alpha * 0.25f; // Only include colors within 80% of max alpha
-                
-                Vector3f color_sum(0.0f, 0.0f, 0.0f);
-                int count = 0;
-                float final_alpha = 0.0f;
-                
-                // Only average colors from animators that are close to the maximum alpha
-                for (size_t k = 0; k < animators.size(); k++) {
-                    float a = max_alpha_per_animator[m * animators.size() + k];
-                    if (a >= threshold) {
-                        color_sum += animators[k].get_color();
-                        count++;
-                        final_alpha = std::max(final_alpha, a);
-                    }
-                }
-                
-                // Average the selected colors
-                if (count > 0) {
-                    screen[m] = color_sum / static_cast<float>(count);
-                }
-                
+            if (total_alpha[m] > 0.0f) {
+                // Normalize the color by total alpha to avoid over-saturation
+                Vector3f blended_color = color_sum[m] / total_alpha[m];
+                // Cap alpha at 1.0
+                float final_alpha = std::min(1.0f, total_alpha[m]);
                 // Blend with background
-                screen[m] = final_alpha * screen[m] + (1.0f - final_alpha) * backgroundColor;
+                screen[m] = final_alpha * blended_color + (1.0f - final_alpha) * backgroundColor;
             } else {
                 screen[m] = backgroundColor;
             }
