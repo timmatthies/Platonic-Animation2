@@ -165,17 +165,10 @@ void Scene::save_image(const int& frame_number, const std::vector<Vector3f>& scr
     std::vector<uint8_t> bmpData(upscaled_width * upscaled_height * 3);
     
     if (upscale_factor == 1) {
-        random_seed = wang_hash(random_seed);
         #pragma omp parallel for
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
-                Vector3f rand_c = Vector3f(
-                    static_cast<float>(wang_hash(random_seed + y * width + x) % 1000) / 1000.0f,
-                    static_cast<float>(wang_hash(random_seed + y * width + x + 1) % 1000) / 1000.0f,
-                    static_cast<float>(wang_hash(random_seed + y * width + x + 2) % 1000) / 1000.0f
-                );
-                // Apply color noise
-                Vector3f c = screen[y * width + x]+ 0.01f*(rand_c-Vector3f(0.5f,0.5f,0.5f));
+
                 size_t idx = (y * width + x) * 3;
                 // Bounds check
                 if (idx + 2 < bmpData.size()) {
