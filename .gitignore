@@ -8,6 +8,7 @@
 *.mp4
 *.obj
 *.obj.d
+audio.mp3
 /build/CMakeFiles
 build/CMakeCache.txt
 build/compile_commands.json
